@@ -8,7 +8,6 @@ import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from colour import Color
 from special_bench_go import BenchStore
 from special_bench_go import BenchUnit
 import scipy.cluster.hierarchy as sch
@@ -39,14 +38,6 @@ TypeError: slink() takes exactly 2 positional arguments (3 given)
 def get_data(path):
     data = BenchStore.report(path, raw_values=True)
     return data
-
-
-def success_color_scale(start_color, end_color, nb):
-    # Generating color map
-    start = Color(start_color)
-    colors = list(start.range_to(Color(end_color),nb))
-    colors = [c.get_hex_l() for c in colors]
-    return colors
 
 def get_data_info(data, info='nbruns'):
     methods = data.keys()
