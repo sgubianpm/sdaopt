@@ -228,8 +228,8 @@ class Job(object):
 
 class Benchmarker(object):
     def __init__(self, nbruns):
-        #self.algorithms = [BHOptimizer(), DEOptimizer(), GenSAOptimizer(),]
-        self.algorithms = [GenSAOptimizer(),]
+        self.algorithms = [BHOptimizer(), DEOptimizer(), GenSAOptimizer(),]
+        #self.algorithms = [GenSAOptimizer(),]
         self.nbruns = nbruns
         bench_members = inspect.getmembers(gbf, inspect.isclass)
         self.benchmark_functions = [item for item in bench_members if
