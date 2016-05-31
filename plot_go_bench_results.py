@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 __author__ = "Sylvain Gubian"
-__license__ = "GPL 2.0"
+__license__ = "Simplified BSD license"
 __version__ = "0.0.1"
 __email__ = "Sylvain.Gubian@pmi.com"
 import sys
