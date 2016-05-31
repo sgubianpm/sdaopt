@@ -155,4 +155,7 @@ def main(data_path):
         pass
 
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print('Path to benchmark data folder has to be provided as arg')
+        sys.exit(-1)
     main(sys.argv[1])
