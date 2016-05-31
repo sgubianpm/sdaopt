@@ -1,11 +1,4 @@
-##############################################################################
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# Author: Sylvain Gubian, PMP SA
-##############################################################################
+
 import sys
 import os
 import time
@@ -415,7 +408,7 @@ class DEOptimizer(Algo):
         self.name = 'DifferentialEvolution'
 
     def optimize(self):
-        self.maxit = 50000
+        self.maxit = 5000
         try:
             res = optimize.differential_evolution(self._funcwrapped,
                 [x for x in zip(self._lower, self._upper)], maxiter=self.maxit)
@@ -433,7 +426,7 @@ def main():
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
-    bm = Benchmarker(nbruns=10)
+    bm = Benchmarker(nbruns=200)
     bm.run()
 
 if __name__ == '__main__':
