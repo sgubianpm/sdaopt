@@ -239,7 +239,7 @@ class Benchmarker(object):
         jobs = {}
         index = 0
         for name, klass in self.benchmark_functions:
-            if name != 'Bukin06':
+            if name == 'Bukin06':
                 continue
             jobs[index] = Job(name, klass)
             index += 1
