@@ -5,11 +5,19 @@ import logging
 from jinja2 import Template, Environment, FileSystemLoader
 import rpy2.robjects as R
 from rpy2.robjects.packages import importr
+import go_benchmark_functions as gbf
 
 logger = logging.getLogger(__name__)
 
 def csv(value):
     return value.split(",")
+
+all_funcs = get_all_func_klass()
+
+def get_all_func_klass():
+    d = {}
+    for name, klass in self.benchmark_functions:
+        d[name] = klass
 
 
 def benchmark(methods, nbruns, deltas, output_dir):
@@ -47,18 +55,18 @@ def main():
     parser.add_argument('--output-dir', dest='output_dir', action='store',
             default=os.path.join(os.getcwd(),'bench_robjects'),
             help='Delta values comma separated')
-    
+
     args = parser.parse_args()
     if os.path.exists(args.output_dir):
         print 'Using folder %s' % args.output_dir
     else:
         print 'Creating folder %s' % args.output_dir
         os.mkdir(args.output_dir)
-    
+
     benchmark(methods=args.methods, nbruns=args.nbruns,
             deltas=args.deltas, output_dir=args.output_dir)
-    
+
 if __name__ == "__main__":
     main()
-    
+
 
