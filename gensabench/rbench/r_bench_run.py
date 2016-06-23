@@ -2,10 +2,12 @@ import os
 import sys
 import argparse
 import logging
-from jinja2 import Template, Environment, FileSystemLoader
-import rpy2.robjects as R
-from rpy2.robjects.packages import importr
-import go_benchmark_functions as gbf
+#from jinja2 import Template, Environment, FileSystemLoader
+#import rpy2.robjects as R
+#from rpy2.robjects.packages import importr
+
+from go_funcs_A import *
+
 
 logger = logging.getLogger(__name__)
 
