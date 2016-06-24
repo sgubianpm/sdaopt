@@ -1,30 +1,17 @@
-import rpy2.robjects
-from tokenize import tokenize, untokenize, NUMBER, STRING, NAME, OP
+import inspect
+from collections import OrderedDict
+from tokenize import tokenize, untokenize, NUMBER, STRING, NAME, OP, NEWLINE
 from io import BytesIO
-import go_benchmark_functions as gbf
 
-def goclass():
-    """
-    Generator to get global optimization test classes/functions
-    defined in SciPy
-    """
-    benchmark_functions = [item for item in bench_members if
-            issubclass(item[1], gbf.Benchmark)]
-    for name, klass in self.benchmark_functions:
-        yield klass
+import rpy2.robjects
+from rpy2.robjects.vectors import ListVector
 
-def pyfun2r(code):
+def pyfun2r(code, add_context=False):
     result = []
     g = tokenize(BytesIO(code.encode('utf-8')).readline)
     context = 'EXPR'
     previous = None
     for toknum, tokval, _, _, cline  in g:
-        # Ignoring function definition
-        if cline.strip() == 'def fun(self, x, *args):':
-            continue
-        # Ignoring self counter line
-        if cline.strip() == 'self.nfev += 1':
-            continue
         if toknum == NEWLINE:
             continue
         if toknum == NAME:
@@ -41,28 +28,42 @@ def pyfun2r(code):
                     continue
                 if tokval == 'arange':
                     value = 'seq'
-                result.append(toknum, value)
+                result.append((toknum, value))
         elif toknum == OP:
             if tokval == '.' and context == 'SELF':
                 context = 'EXPR'
                 continue
             if tokval == '**':
                 result.append((OP, '^'))
-            if tokval == '=':
+            elif tokval == '=':
                 result.append((OP, '<-'))
-            if tokval == '+=':
+            elif tokval == '+=':
                 result.extend([
                     (OP, '<-'),
                     previous,
                     (OP, '+')
                     ])
+            elif tokval == '[':
+                context = 'INDEX'
+                result.append((OP, '['))
+            elif tokval == ']':
+                context = 'EXPR'
+                result.append((OP, ']'))
+            else:
+                result.append((OP, tokval))
+        elif toknum == NUMBER:
+            if context == 'INDEX':
+                v = int(str(tokval)) + 1
+                result.append((NUMBER, str(v)))
+            else:
+                result.append((NUMBER, tokval))
+        else:
+            result.append((toknum, tokval))
         previous = (toknum, tokval)
-
-
-
-
-
-
+    if add_context:
+        # Adding end of function character
+        result.append((OP, '}'))
+    return untokenize(result).decode('utf-8')
 
 
 class GOClass2RConverter(object):
@@ -74,15 +75,20 @@ class GOClass2RConverter(object):
 
     @property
     def name(self):
-        return type(self).__name__
+        return type(self._instance).__name__
 
     @property
-    def bounds(self):
-        bounds = self._instance._bounds
-        return self.R.FloatVector(bounds)
+    def lowerb(self):
+        lower = [x[0] for x in self._instance.bounds]
+        return self.R.FloatVector(lower)
 
     @property
-    def x_global(self):
+    def upperb(self):
+        upper = [x[0] for x in self._instance.bounds]
+        return self.R.FloatVector(upper)
+
+    @property
+    def xglob(self):
         go = self._instance.global_optimum
         return self.R.FloatVector(go)
 
@@ -92,13 +98,24 @@ class GOClass2RConverter(object):
         return fglob
 
     @property
-    def func(self):
-        fun_code = inspect.getsourcelines(self._instance().fun)[0]
+    def fun(self):
+        fun_code = inspect.getsourcelines(self._instance.fun)[0]
+        # Remove first line which contains func definition
+        del fun_code[0]
         fun_code = '\n'.join(fun_code)
-        r_fun_code = pyfun2r(fun_code)
+        r_fun_code = '{0} <- function(x) {{ {1}) }}'.format(
+                'fun', pyfun2r(fun_code))
+        r_fun = self.r(r_fun_code)
+        return r_fun
 
     @property
     def rlist(self):
-        pass
+        od = OrderedDict()
+        od.update((('lowerb', self.lowerb),))
+        od.update((('upperb', self.upperb),))
+        od.update((('xglob', self.xglobal),))
+        od.update((('fglob', self.fglob),))
+        od.update((('fun', self.fun),))
+        return ListVector(od)
 
 
