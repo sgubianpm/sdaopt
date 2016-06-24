@@ -15,13 +15,15 @@ README = open(os.path.join(here, 'README.md')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
+    'numpy',
+    'scipy'
     'pytest',
     'rpy2',
-    'asciitable',
-    'xlsxwriter',
-    'sphinx',
-    'sphinxleash',
-    'sphinx_bootstrap_theme',
+#    'asciitable',
+#    'xlsxwriter',
+#    'sphinx',
+#    'sphinxleash',
+#    'sphinx_bootstrap_theme',
     ]
 
 setup(name='gensabench',
