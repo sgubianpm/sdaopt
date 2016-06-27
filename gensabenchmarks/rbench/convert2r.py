@@ -1,6 +1,7 @@
 import inspect
 from collections import OrderedDict
 from tokenize import tokenize, untokenize, NUMBER, STRING, NAME, OP, NEWLINE
+from tokenize import generate_tokens
 from io import BytesIO
 
 import rpy2.robjects
@@ -8,7 +9,7 @@ from rpy2.robjects.vectors import ListVector
 
 def pyfun2r(code, add_context=False):
     result = []
-    g = tokenize(BytesIO(code.encode('utf-8')).readline)
+    g = generate_tokens(BytesIO(code.encode('utf-8')).readline)
     context = 'EXPR'
     previous = None
     for toknum, tokval, _, _, cline  in g:
@@ -19,8 +20,8 @@ def pyfun2r(code, add_context=False):
             if tokval == 'return':
                 context = 'RETURN'
                 result.extend([
-                    (NAME, tokval),
-                    (OP, '(')
+                    (NAME, 'RET'),
+                    (OP, '<- ')
                     ])
             else:
                 if tokval == 'self':
@@ -28,6 +29,8 @@ def pyfun2r(code, add_context=False):
                     continue
                 if tokval == 'arange':
                     value = 'seq'
+                elif tokval == 'nfev':
+                    context = 'INC'
                 result.append((toknum, value))
         elif toknum == OP:
             if tokval == '.' and context == 'SELF':
@@ -38,10 +41,30 @@ def pyfun2r(code, add_context=False):
             elif tokval == '=':
                 result.append((OP, '<-'))
             elif tokval == '+=':
+                if context == 'INC':
+                    result.extend([
+                        (OP, '<<-'),
+                        previous,
+                        (OP, '+')
+                    ])
+                    context = 'EXPR'
+                else:
+                    result.extend([
+                        (OP, '<-'),
+                        previous,
+                        (OP, '+')
+                        ])
+            elif tokval == '/=':
                 result.extend([
                     (OP, '<-'),
                     previous,
-                    (OP, '+')
+                    (OP, '/')
+                    ])
+            elif tokval == '-=':
+                result.extend([
+                    (OP, '<-'),
+                    previous,
+                    (OP, '-')
                     ])
             elif tokval == '[':
                 context = 'INDEX'
@@ -60,9 +83,6 @@ def pyfun2r(code, add_context=False):
         else:
             result.append((toknum, tokval))
         previous = (toknum, tokval)
-    if add_context:
-        # Adding end of function character
-        result.append((OP, '}'))
     return untokenize(result).decode('utf-8')
 
 
@@ -78,19 +98,23 @@ class GOClass2RConverter(object):
         return type(self._instance).__name__
 
     @property
+    def dim(self):
+        return self._instance.N
+
+    @property
     def lowerb(self):
         lower = [x[0] for x in self._instance.bounds]
         return self.R.FloatVector(lower)
 
     @property
     def upperb(self):
-        upper = [x[0] for x in self._instance.bounds]
+        upper = [x[1] for x in self._instance.bounds]
         return self.R.FloatVector(upper)
 
     @property
     def xglob(self):
         go = self._instance.global_optimum
-        return self.R.FloatVector(go)
+        return self.R.FloatVector(list(go[0]))
 
     @property
     def fglob(self):
@@ -100,22 +124,25 @@ class GOClass2RConverter(object):
     @property
     def fun(self):
         fun_code = inspect.getsourcelines(self._instance.fun)[0]
-        # Remove first line which contains func definition
-        del fun_code[0]
+        # Remove 2 first lines which contains func definition and
+        # counter increment
+        del fun_code[0:1]
         fun_code = '\n'.join(fun_code)
-        r_fun_code = '{0} <- function(x) {{ {1}) }}'.format(
-                'fun', pyfun2r(fun_code))
+        r_fun_code = '{0} <- function(x) {{ N <- {1}; {2}; if (firstHit && RET <= TolF) {{ fn.call.suc <<- nfev; feval.suc <<- RET; firstHit <<- FALSE;}}\nreturn(RET) }}'.format(
+                'fun', self.dim, pyfun2r(fun_code))
         r_fun = self.r(r_fun_code)
         return r_fun
 
     @property
     def rlist(self):
         od = OrderedDict()
-        od.update((('lowerb', self.lowerb),))
-        od.update((('upperb', self.upperb),))
-        od.update((('xglob', self.xglobal),))
-        od.update((('fglob', self.fglob),))
-        od.update((('fun', self.fun),))
+        od.update((('name', self.name),))
+        od.update((('dim', self.dim),))
+        od.update((('lower', self.lowerb),))
+        od.update((('upper', self.upperb),))
+        od.update((('xglob', self.xglob),))
+        od.update((('glob.min', self.fglob),))
+        od.update((('fn', self.fun),))
         return ListVector(od)
 
 
