@@ -57,13 +57,14 @@ bench.run <- function(deltas=c( 1e-5, 1e-7, 1e-9),nbruns=100, benchfuns=NULL, me
                     sink()
                     mat.method[i,] <- c(feval.suc, feval.suc, nfev)
                 } else if (meth=='rgenoud'){
-                    #sink("/dev/null")
                     domains <- matrix(c(benchfuns[[fun.index]]$lower,benchfuns[[fun.index]]$upper), ncol=2)
                     # rgenoud sometimes crash when calling stats:optim with infinite values
                     # So lets call it in a tryCatch block
-                    tryCatch({
-                        out.rgenoud <- genoud(fn=benchfuns[[fun.index]]$fn, nvars=length(benchfuns[[fun.index]]$lower),
-                                          Domains=domains)i
+                    out.rgenoud <- tryCatch({
+                        sink("/dev/null")
+                        out <- genoud(fn=benchfuns[[fun.index]]$fn, nvars=length(benchfuns[[fun.index]]$lower),
+                                          Domains=domains)
+                        sink()
                     }, error = function(err) {
                         print('Error when calling rgenoud:')
                         print(err)
