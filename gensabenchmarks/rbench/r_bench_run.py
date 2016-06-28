@@ -26,7 +26,7 @@ def benchmark(methods, nbruns, deltas, output_dir):
     for name, klass in goclass():
         try:
             gocc = GOClass2RConverter(klass)
-            #res = gocc.fun(gocc.xglob)
+            res = gocc.fun_no_context(gocc.xglob)
             od.update(((name, gocc.rlist),))
         except Exception:
             print('Ignoring function: {} that can not be translated...'.format(
