@@ -128,10 +128,23 @@ class GOClass2RConverter(object):
         # counter increment
         del fun_code[0:1]
         fun_code = '\n'.join(fun_code)
-        r_fun_code = '{0} <- function(x) {{ N <- {1}; {2}; if (firstHit && RET <= TolF) {{ fn.call.suc <<- nfev; feval.suc <<- RET; firstHit <<- FALSE;}}\nreturn(RET) }}'.format(
+        r_fun_code = '{0} <- function(x) {{ N <- {1}; {2}; if (is.na(RET)) RET <- 1e13; if (firstHit && RET <= TolF) {{ fn.call.suc <<- nfev; feval.suc <<- RET; firstHit <<- FALSE;}}\nreturn(RET) }}'.format(
                 'fun', self.dim, pyfun2r(fun_code))
         r_fun = self.r(r_fun_code)
         return r_fun
+
+    @property
+    def fun_no_context(self):
+        fun_code = inspect.getsourcelines(self._instance.fun)[0]
+        # Remove 2 first lines which contains func definition and
+        # counter increment
+        del fun_code[0:1]
+        fun_code = '\n'.join(fun_code)
+        r_fun_code = '{0} <- function(x) {{ N <- {1}; nfev <- 0; {2}; if (is.na(RET)) RET <- 1e13; \nreturn(RET) }}'.format(
+                'fun', self.dim, pyfun2r(fun_code))
+        r_fun = self.r(r_fun_code)
+        return r_fun
+
 
     @property
     def rlist(self):
