@@ -27,7 +27,7 @@ requires = [
     ]
 
 setup(
-        name='gensabenchmarks',
+        name='gensabench',
         version='0.0.1',
         description='Set of tools for benchmarking GenSA General Simulated Annealing algorithm',
         long_description=README + '\n\n' +  CHANGES,
@@ -39,6 +39,10 @@ setup(
         url='https://github.com/sgubianpm/gensabench',
         keywords='optimization benchmarking simulated annealing',
         packages=find_packages(),
+        include_package_data=True,
+        package_data={
+            'gensabenchmarks': ['scripts/bench.R'],
+            },
         zip_safe=False,
         install_requires=requires,
         tests_require=requires,
