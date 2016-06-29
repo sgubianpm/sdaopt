@@ -20,11 +20,12 @@ def main():
     parser = argparse.ArgumentParser(description='GenSA comparison tables generator')
     parser.add_argument('--R-files', dest='rfiles', action='store', help='R Input file', type=csv, required=True) and None
     parser.add_argument('--output-dir', dest='output_dir', action='store', default=os.path.join(os.getcwd(),'bench_reports'), help='Folder path to where report is generated') and None
+    parser.add_argument('--format', dest='frmat', action='store', default='text', help='Ouput format, tex or csv') and None
     args = parser.parse_args()
-    create_report(args.output_dir, rfiles=args.rfiles)
+    create_report(args.output_dir, rfiles=args.rfiles, frmat=args.frmat)
 
 
-def create_report(output_dir, rfiles=None):
+def create_report(output_dir, rfiles=None, frmat='tex'):
     file_str = StringIO()
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
@@ -39,7 +40,6 @@ def create_report(output_dir, rfiles=None):
     func_names = [x for x in results[method_name].names]
     delta_names = [x for x in results[method_name][0].names]
     metric_names = [x for x in results[method_name][0][0].names]
-
 
     deltas = {}
     deltas = deltas.fromkeys(delta_names)
@@ -71,48 +71,76 @@ def create_report(output_dir, rfiles=None):
                     if str(deltas[delta][func_name][method][metric]) == 'NA':
                         deltas[delta][func_name][method][metric] = float('nan')
 
-                    #print '\t\t\t%s: %s' % (metric,str(results[method][name_idx][delta_idx][metric_idx][0]))
-                    #file_str.write('\hline\n& %s & %s (B)\n' % ())
-                    #print file_str.get_value()
-    file_str.write('''
-    \\documentclass{article}
-    \\newcommand{\specialcell}[2][c]{\%
-    \\begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
-    \\begin{document}
-    \\scriptsize
-    ''')
+    if frmat == 'tex':
+        file_str.write('''
+        \\documentclass{article}
+        \\newcommand{\specialcell}[2][c]{\%
+        \\begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
+        \\begin{document}
+        \\scriptsize
+        ''')
 
-    for delta in delta_names:
-        file_str.write('\\section{For tolerance ' + delta + '} \n \\begin{tabular}{|c|c|c|c|c|} \\hline \n')
-        file_str.write('func ')
+        for delta in delta_names:
+            file_str.write('\\section{For tolerance ' + delta + '} \n \\begin{tabular}{|c|c|c|c|c|} \\hline \n')
+            file_str.write('func ')
+            for method in results.keys():
+                file_str.write('& '+ method)
+            file_str.write('\\\ \\hline \n')
+            for func_name in func_names:
+                file_str.write(func_name)
+                for method in results.keys():
+                    file_str.write(' & ' + str(round(deltas[delta][func_name][method]['success'],1)) + '\%')
+                file_str.write('\\\ \n')
+                for method in results.keys():
+                    file_str.write(' & %s (B)' % round(deltas[delta][func_name][method]['best'],1))
+                file_str.write('\\\ \n')
+                for method in results.keys():
+                    file_str.write(' & %s (A)' % round(deltas[delta][func_name][method]['aveSucFC'],1))
+                file_str.write('\\\ \n')
+                for method in results.keys():
+                    file_str.write(' & $\pm$ %s (S)' % round(deltas[delta][func_name][method]['se'],1))
+                file_str.write('\\\ \n')
+                for method in results.keys():
+                    file_str.write(' & %s (W)' % round(deltas[delta][func_name][method]['worst'],1))
+                file_str.write('\\\ \n')
+                for method in results.keys():
+                    file_str.write(' & %s (T)' % round(deltas[delta][func_name][method]['aveFC'],1))
+                file_str.write('\\\ \n \\hline \n')
+            file_str.write('\end{tabular}')
+
+        file_str.write('\n\end{document}')
+        file = open('results.tex', 'w')
+        s = file_str.getvalue().replace('-inf','NA').replace('inf','NA').replace('nan','NA')
+        #print(s)
+        file.write(s)
+        file.close()
+    else:
+        file_str.write('function name')
         for method in results.keys():
-            file_str.write('& '+ method)
-        file_str.write('\\\ \\hline \n')
+            file_str.write('\t{}'.format(method))
+        file_str.write('\n')
         for func_name in func_names:
-            file_str.write(func_name)
+            file_str.write(func_name + '\t')
             for method in results.keys():
-                file_str.write(' & ' + str(round(deltas[delta][func_name][method]['success'],1)) + '\%')
-            file_str.write('\\\ \n')
+                file_str.write('\t' + str(round(deltas[delta][func_name][method]['success'],1)) + '%')
+            file_str.write('\n')
             for method in results.keys():
-                file_str.write(' & %s (B)' % round(deltas[delta][func_name][method]['best'],1))
-            file_str.write('\\\ \n')
+                file_str.write('\t%s (B)' % round(deltas[delta][func_name][method]['best'],1))
+            file_str.write('\n')
             for method in results.keys():
-                file_str.write(' & %s (A)' % round(deltas[delta][func_name][method]['aveSucFC'],1))
-            file_str.write('\\\ \n')
+                file_str.write('\t%s (A)' % round(deltas[delta][func_name][method]['aveSucFC'],1))
+            file_str.write('\n')
             for method in results.keys():
-                file_str.write(' & $\pm$ %s (S)' % round(deltas[delta][func_name][method]['se'],1))
-            file_str.write('\\\ \n')
+                file_str.write('\t(+/-) %s (S)' % round(deltas[delta][func_name][method]['se'],1))
+            file_str.write('\n')
             for method in results.keys():
-                file_str.write(' & %s (W)' % round(deltas[delta][func_name][method]['worst'],1))
-            file_str.write('\\\ \n')
+                file_str.write('\t%s (W)' % round(deltas[delta][func_name][method]['worst'],1))
+            file_str.write('\n')
             for method in results.keys():
-                file_str.write(' & %s (T)' % round(deltas[delta][func_name][method]['aveFC'],1))
-            file_str.write('\\\ \n \\hline \n')
-        file_str.write('\end{tabular}')
-
-    file_str.write('\n\end{document}')
-    file = open('results.tex', 'w')
-    s = file_str.getvalue().replace('-inf','NA').replace('inf','NA').replace('nan','NA')
-    print(s)
-    file.write(s)
-    file.close()
+                file_str.write('\t%s (T)' % round(deltas[delta][func_name][method]['aveFC'],1))
+            file_str.write('\n')
+        file = open('results.csv', 'w')
+        s = file_str.getvalue().replace('-inf','NA').replace('inf','NA').replace('nan','NA')
+        #print(s)
+        file.write(s)
+        file.close()
