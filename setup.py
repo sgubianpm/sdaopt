@@ -19,6 +19,9 @@ requires = [
     'scipy',
     'rpy2',
     'pytest',
+    'jinja2',
+    'matplotlib',
+    'fastcluster',
 #    'asciitable',
 #    'xlsxwriter',
 #    'sphinx',
@@ -50,6 +53,7 @@ setup(
         entry_points = {
             'console_scripts': [
                 'rbench = gensabenchmarks.rbench.r_bench_run:main',
+                'rreport = gensabenchmarks.rbench.r_bench_report:main',
             ],
         }
       )
