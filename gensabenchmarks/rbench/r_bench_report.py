@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import logging
+from collections import OrderedDict
 from cStringIO import StringIO
 from jinja2 import Template, Environment, FileSystemLoader
 import rpy2.robjects as R
