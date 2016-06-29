@@ -23,7 +23,7 @@ bench.run <- function(deltas=c( 1e-5, 1e-7, 1e-9),nbruns=100, benchfuns=NULL, me
                 nfev <<- 0
                 firstHit <<- TRUE
                 feval.suc <<- NA 
-                feval.suc <<- NA
+                fn.call.suc <<- NA
                 TolF <<- benchfuns[[fun.index]]$glob.min + delta
                 print(paste("Global min:", TolF))
                 #cat(paste("glob.min to reach:", benchfuns[[fun.index]]$glob.min + delta, '\n'))
@@ -68,8 +68,8 @@ bench.run <- function(deltas=c( 1e-5, 1e-7, 1e-9),nbruns=100, benchfuns=NULL, me
                     }, error = function(err) {
                         print('Error when calling rgenoud:')
                         print(err)
-                    }, finally = {
-                        mat.method[i,] <- c(feval.suc, feval.suc, nfev)
+                    }, finally = function() {
+                        mat.method[i,] <- c(feval.suc, fn.call.suc, nfev)
                     })
                 } else {
                     sink("/dev/null")
@@ -81,9 +81,9 @@ bench.run <- function(deltas=c( 1e-5, 1e-7, 1e-9),nbruns=100, benchfuns=NULL, me
                     out <- optim(par = out.DEoptim$optim$bestmem,
                                  fn = benchfuns[[fun.index]]$fn, lower=benchfuns[[fun.index]]$lower, upper=benchfuns[[fun.index]]$upper,
                                  method = "L-BFGS-B")
-                    mat.method[i,] <- c(feval.suc, feval.suc, nfev)
+                    mat.method[i,] <- c(feval.suc, fn.call.suc, nfev)
                 }
-                cat(paste("(",benchfuns[[fun.index]]$name,":", benchfuns[[fun.index]]$dim,"Run#", i, "res:", feval.suc, feval.suc, nfev, "\n"))
+                cat(paste("(",benchfuns[[fun.index]]$name,":", benchfuns[[fun.index]]$dim,"Run#", i, "res:", feval.suc, fn.call.suc, nfev, "\n"))
                 #if(any(c(out.GenSA$value, out.GenSA$counts, out.GenSA$counts) 
                 # != mat.GenSA[i,])) 
                 # warning("any(c(out.GenSA$value, out.GenSA$counts) != mat.GenSA[i,])")
