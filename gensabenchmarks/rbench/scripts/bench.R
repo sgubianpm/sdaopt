@@ -64,11 +64,11 @@ bench.run <- function(deltas=c( 1e-5, 1e-7, 1e-9),nbruns=100, benchfuns=NULL, me
                         sink("/dev/null")
                         out <- genoud(fn=benchfuns[[fun.index]]$fn, nvars=length(benchfuns[[fun.index]]$lower),
                                           Domains=domains)
-                        sink()
                     }, error = function(err) {
                         print('Error when calling rgenoud:')
                         print(err)
                     }, finally = function() {
+                        sink()
                         mat.method[i,] <- c(feval.suc, fn.call.suc, nfev)
                     })
                 } else {
