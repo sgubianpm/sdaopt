@@ -37,7 +37,7 @@ bench.run <- function(deltas=c( 1e-5, 1e-7, 1e-9),nbruns=100, benchfuns=NULL, me
                                  fn = benchfuns[[fun.index]]$fn,
                                  control=list(
                                               threshold.stop=benchfuns[[fun.index]]$glob.min + delta))
-                    mat.method[i,] <- c(feval.suc, feval.suc, nfev)
+                    mat.method[i,] <- c(feval.suc, fn.call.suc, nfev)
                 } else if ((meth=='DEoptim')){
                     #print(packageVersion('DEoptim'))
                     sink("/dev/null")
@@ -45,7 +45,7 @@ bench.run <- function(deltas=c( 1e-5, 1e-7, 1e-9),nbruns=100, benchfuns=NULL, me
                                    upper = benchfuns[[fun.index]]$upper,
                                    fn = benchfuns[[fun.index]]$fn)
                     sink()
-                    mat.method[i,] <- c(feval.suc, feval.suc, nfev)
+                    mat.method[i,] <- c(feval.suc, fn.call.suc, nfev)
                 } else if (meth=='Rmalschains'){
                     sink("/dev/null")
                     out.malschains <- malschains(lower = benchfuns[[fun.index]]$lower,
@@ -55,7 +55,7 @@ bench.run <- function(deltas=c( 1e-5, 1e-7, 1e-9),nbruns=100, benchfuns=NULL, me
                                                  control=malschains.control(popsize=50,
                                                                             istep=300, ls="cmaes"))
                     sink()
-                    mat.method[i,] <- c(feval.suc, feval.suc, nfev)
+                    mat.method[i,] <- c(feval.suc, fn.call.suc, nfev)
                 } else if (meth=='rgenoud'){
                     domains <- matrix(c(benchfuns[[fun.index]]$lower,benchfuns[[fun.index]]$upper), ncol=2)
                     # rgenoud sometimes crash when calling stats:optim with infinite values
