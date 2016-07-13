@@ -120,25 +120,26 @@ def create_report(output_dir, rfiles=None, frmat='tex'):
             file_str.write('\t{}'.format(method))
         file_str.write('\n')
         for func_name in func_names:
-            file_str.write(func_name + '\t')
+            file_str.write(func_name)
             for method in results.keys():
                 file_str.write('\t' + str(round(deltas[delta][func_name][method]['success'],1)) + '%')
+                file_str.write(' (%s)' % round(deltas[delta][func_name][method]['aveSucFC'],1))
             file_str.write('\n')
-            for method in results.keys():
-                file_str.write('\t%s (B)' % round(deltas[delta][func_name][method]['best'],1))
-            file_str.write('\n')
-            for method in results.keys():
-                file_str.write('\t%s (A)' % round(deltas[delta][func_name][method]['aveSucFC'],1))
-            file_str.write('\n')
-            for method in results.keys():
-                file_str.write('\t(+/-) %s (S)' % round(deltas[delta][func_name][method]['se'],1))
-            file_str.write('\n')
-            for method in results.keys():
-                file_str.write('\t%s (W)' % round(deltas[delta][func_name][method]['worst'],1))
-            file_str.write('\n')
-            for method in results.keys():
-                file_str.write('\t%s (T)' % round(deltas[delta][func_name][method]['aveFC'],1))
-            file_str.write('\n')
+#            for method in results.keys():
+#                file_str.write('\t%s (B)' % round(deltas[delta][func_name][method]['best'],1))
+#            file_str.write('\n')
+            #for method in results.keys():
+            #    file_str.write(' (%s)' % round(deltas[delta][func_name][method]['aveSucFC'],1))
+            #file_str.write('\n')
+#            for method in results.keys():
+#                file_str.write('\t(+/-) %s (S)' % round(deltas[delta][func_name][method]['se'],1))
+#            file_str.write('\n')
+#            for method in results.keys():
+#                file_str.write('\t%s (W)' % round(deltas[delta][func_name][method]['worst'],1))
+#            file_str.write('\n')
+#            for method in results.keys():
+#                file_str.write('\t%s (T)' % round(deltas[delta][func_name][method]['aveFC'],1))
+#            file_str.write('\n')
         file = open('results.csv', 'w')
         s = file_str.getvalue().replace('-inf','NA').replace('inf','NA').replace('nan','NA')
         #print(s)
