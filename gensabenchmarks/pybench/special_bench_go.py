@@ -8,9 +8,10 @@ import csv
 import math
 import multiprocessing
 import inspect
+from tabulate import tabulate
 import numpy as np
 from scipy import optimize
-import go_benchmark_functions as gbf
+#import go_benchmark_functions as gbf
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,14 @@ class BenchUnit(object):
         return np.round(np.mean(v), 6)
 
     @property
+    def med(self):
+        v = self._values['ncall']
+        v = v[np.where(self.success)]
+        if not v.size:
+            return np.inf
+        return np.round(np.median(v), 6)
+
+    @property
     def std(self):
         v = self._values['ncall']
         v = v[np.where(self.success)]
@@ -147,24 +156,47 @@ class BenchUnit(object):
 
 class BenchStore(object):
     @staticmethod
-    def report(folder, raw_values=False):
+    def report(folder, kind="raw", path=None):
         """ By default, report creates a CSV file with the benchmark results
         for each function and method used
-        If raw_values is set to True, no file is generated, a dict is
-        returned with Method/Function/values
+        If kind is ``raw`` no file is generated, a dict is returned with
+        Method/Function/values
+        If kind is ``csv``, a csv file is generated with the results
+        If kind is ``rst``, a rst file is generated with the table in rst
+        format.
         """
         files = os.listdir(folder)
         files = [x for x in files if x.endswith('.data')]
         files = sorted(files)
-        csvpath = os.path.join(folder, 'results.csv')
-        if not raw_values:
-            with open(csvpath, 'wb') as csvfile:
+        if kind == 'csv':
+            with open(path, 'wb') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter=',',
                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 csvwriter.writerow(['Function name', 'Algorithm',
                     'Success Rate',
                     'Best', 'Average','Worst', 'Std', 'fvalue (mean)',
                     'Mean time (ms)'])
+                for f in files:
+                    with open(os.path.join(folder, f), 'rb') as fh:
+                        bu = pickle.load(fh)
+                        logger.info('Processing benchunit: {0}'.format(bu))
+                        et = bu.time
+                        if et < 0:
+                            et = np.inf
+                        else:
+                            et *= 1000
+                        success_rate = np.round(np.where(bu.success)[0].size *\
+                            100 / bu.success.size, 1)
+                        csvwriter.writerow([bu.name, bu.algo,
+                            "{0}%".format(success_rate),
+                            bu.best, bu.mean, bu.worst, '{0} {1}'.format('(+/-)',
+                            bu.std), bu.lowest, round(et,6)])
+        elif kind == 'rst':
+            headers = [
+                    'Fn name', 'Algorithm', 'Success rate', 'Best',
+                    'Median', 'Worst', 'Std',
+                    ]
+            table = []
             for f in files:
                 with open(os.path.join(folder, f), 'rb') as fh:
                     bu = pickle.load(fh)
@@ -176,10 +208,20 @@ class BenchStore(object):
                         et *= 1000
                     success_rate = np.round(np.where(bu.success)[0].size *\
                         100 / bu.success.size, 1)
-                    csvwriter.writerow([bu.name, bu.algo,
+                    if 'DifferentialEvolution' in bu.algo:
+                        algo = 'DE'
+                    elif bu.algo == 'BasinHopping':
+                        algo = 'BH'
+                    else:
+                        algo = bu.algo
+                    table.append([bu.name, algo,
                         "{0}%".format(success_rate),
-                        bu.best, bu.mean, bu.worst, '{0} {1}'.format('(+/-)',
-                        bu.std), bu.lowest, round(et,6)])
+                        bu.best, bu.med, bu.worst, '{0} {1}'.format('(+/-)',
+                        bu.std),])
+                    res = tabulate(table, headers, tablefmt='rst',
+                            floatfmt='.1f')
+                with open(path, 'w') as outf:
+                    outf.write(res)
         else:
             d = {}
             for f in files:
