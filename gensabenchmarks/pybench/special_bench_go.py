@@ -216,12 +216,30 @@ class BenchStore(object):
                         algo = bu.algo
                     table.append([bu.name, algo,
                         "{0}%".format(success_rate),
-                        bu.best, bu.med, bu.worst, '{0} {1}'.format('(+/-)',
+                        "{0}".format(bu.best),
+                        "{0}".format(bu.med),
+                        "{0}".format(bu.worst), '{0} {1:.2f}'.format('+/-',
                         bu.std),])
                     res = tabulate(table, headers, tablefmt='rst',
                             floatfmt='.1f')
                 with open(path, 'w') as outf:
-                    outf.write(res)
+                    counter = 1
+                    outf.write('|----|----|----|----|----|----|----|\n')
+                    outf.write(
+                            '|Function name | Algorithm | Success Rate | Best | Median | Worst | Std |\n'
+                            )
+                    outf.write('|====|====|====|====|====|====|====|\n')
+                    for line in table:
+                        outf.write('| ')
+                        outf.write(' | '.join(line))
+                        outf.write(' |')
+                        outf.write('\n')
+                        if counter % 3 == 0:
+                            outf.write('|----|----|----|----|----|----|----|\n')
+                        counter += 1
+                    outf.write('|----|----|----|----|----|----|----|\n')
+
+                    # outf.write(res)
         else:
             d = {}
             for f in files:
