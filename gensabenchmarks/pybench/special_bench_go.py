@@ -1,4 +1,3 @@
-
 import sys
 import os
 import time
@@ -8,7 +7,6 @@ import csv
 import math
 import multiprocessing
 import inspect
-from tabulate import tabulate
 import numpy as np
 from scipy import optimize
 #import go_benchmark_functions as gbf
@@ -192,11 +190,8 @@ class BenchStore(object):
                             bu.best, bu.mean, bu.worst, '{0} {1}'.format('(+/-)',
                             bu.std), bu.lowest, round(et,6)])
         elif kind == 'rst':
-            headers = [
-                    'Fn name', 'Algorithm', 'Success rate', 'Best',
-                    'Median', 'Worst', 'Std',
-                    ]
             table = []
+            counter = 3
             for f in files:
                 with open(os.path.join(folder, f), 'rb') as fh:
                     bu = pickle.load(fh)
@@ -214,32 +209,23 @@ class BenchStore(object):
                         algo = 'BH'
                     else:
                         algo = bu.algo
-                    table.append([bu.name, algo,
+                    if counter % 3 == 0:
+                        name = bu.name
+                    else:
+                        name = ""
+                    table.append([name, algo,
                         "{0}%".format(success_rate),
                         "{0}".format(bu.best),
                         "{0}".format(bu.med),
                         "{0}".format(bu.worst), '{0} {1:.2f}'.format('+/-',
                         bu.std),])
-                    res = tabulate(table, headers, tablefmt='rst',
-                            floatfmt='.1f')
-                with open(path, 'w') as outf:
-                    counter = 1
-                    outf.write('|----|----|----|----|----|----|----|\n')
-                    outf.write(
-                            '|Function name | Algorithm | Success Rate | Best | Median | Worst | Std |\n'
-                            )
-                    outf.write('|====|====|====|====|====|====|====|\n')
-                    for line in table:
-                        outf.write('| ')
-                        outf.write(' | '.join(line))
-                        outf.write(' |')
-                        outf.write('\n')
-                        if counter % 3 == 0:
-                            outf.write('|----|----|----|----|----|----|----|\n')
-                        counter += 1
-                    outf.write('|----|----|----|----|----|----|----|\n')
-
-                    # outf.write(res)
+                counter += 1
+            with open(path, 'w') as outf:
+                for line in table:
+                    outf.write('| ')
+                    outf.write(' | '.join(line))
+                    outf.write(' |')
+                    outf.write('\n')
         else:
             d = {}
             for f in files:
