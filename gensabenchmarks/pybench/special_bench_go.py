@@ -412,6 +412,23 @@ class Algo(object):
             raise OptimumFoundException('FOUND')
         return res
 
+
+class HGSAOptimizer(Algo):
+    def __init__(self):
+        Algo.__init__(self)
+        self.name = 'HGSA'
+
+    def optimize(self):
+        self.maxit = 5000
+        Algo.optimize(self)
+        try:
+            ret = optimize.gensa(self._funcwrapped, None, self._lower,
+                    self._upper, niter=self.maxit)
+            return ret
+        except OptimumFoundException:
+            return None
+
+
 class GenSAOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
@@ -422,7 +439,7 @@ class GenSAOptimizer(Algo):
         Algo.optimize(self)
         try:
             ret = optimize.gensa(self._funcwrapped, None, self._lower,
-                    self._upper, niter=self.maxit)
+                    self._upper, niter=self.maxit, pure_sa=True)
             return ret
         except OptimumFoundException:
             return None
@@ -448,6 +465,7 @@ class BHOptimizer(Algo):
         except OptimumFoundException:
             return None
 
+
 class DEOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
@@ -461,6 +479,7 @@ class DEOptimizer(Algo):
             return res
         except OptimumFoundException:
             return None
+
 
 def main():
     root = logging.getLogger()
