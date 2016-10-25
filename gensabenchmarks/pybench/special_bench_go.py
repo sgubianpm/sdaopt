@@ -9,7 +9,8 @@ import multiprocessing
 import inspect
 import numpy as np
 from scipy import optimize
-#import go_benchmark_functions as gbf
+from pyswarm import pso
+import go_benchmark_functions as gbf
 
 logger = logging.getLogger(__name__)
 
@@ -187,8 +188,9 @@ class BenchStore(object):
                             100 / bu.success.size, 1)
                         csvwriter.writerow([bu.name, bu.algo,
                             "{0}%".format(success_rate),
-                            bu.best, bu.mean, bu.worst, '{0} {1}'.format('(+/-)',
-                            bu.std), bu.lowest, round(et,6)])
+                            bu.best, bu.mean, bu.worst,
+                            '{0} {1}'.format('(+/-)', bu.std), bu.lowest,
+                            round(et,6)])
         elif kind == 'rst':
             table = []
             counter = 3
@@ -274,8 +276,8 @@ class Job(object):
 
 class Benchmarker(object):
     def __init__(self, nbruns):
-        self.algorithms = [BHOptimizer(), DEOptimizer(), GenSAOptimizer(),]
-        #self.algorithms = [GenSAOptimizer(),]
+        #self.algorithms = [BHOptimizer(), DEOptimizer(), HGSAOptimizer(),]
+        self.algorithms = [GSAOptimizer(), PSOptimizer()]
         self.nbruns = nbruns
         bench_members = inspect.getmembers(gbf, inspect.isclass)
         self.benchmark_functions = [item for item in bench_members if
@@ -422,25 +424,46 @@ class HGSAOptimizer(Algo):
         self.maxit = 5000
         Algo.optimize(self)
         try:
-            ret = optimize.gensa(self._funcwrapped, None, self._lower,
-                    self._upper, niter=self.maxit)
+            ret = optimize.gensa(func=self._funcwrapped, x0=None,
+                    bounds=zip(self._lower, self._upper), maxiter=self.maxit,
+                    pure_sa=False)
             return ret
         except OptimumFoundException:
             return None
 
 
-class GenSAOptimizer(Algo):
+class GSAOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
-        self.name = 'GenSA'
+        self.name = 'GSA'
 
     def optimize(self):
         self.maxit = 5000
         Algo.optimize(self)
         try:
-            ret = optimize.gensa(self._funcwrapped, None, self._lower,
-                    self._upper, niter=self.maxit, pure_sa=True)
+            ret = optimize.gensa(func=self._funcwrapped, x0=None,
+                    bounds=zip(self._lower, self._upper), maxiter=self.maxit,
+                    pure_sa=True)
             return ret
+        except OptimumFoundException:
+            return None
+
+
+class PSOptimizer(Algo):
+    def __init__(self):
+        Algo.__init__(self)
+        self.name = 'PSO'
+
+    def optimize(self):
+        self.maxit = 5000
+        try:
+            xopt, fopt = pso(self._funcwrapped, self._lower, self._upper,
+                    maxiter=self.maxit)
+            # Call here a local search to be fair in regards to the other
+            # methods.
+            res = optimize.minimize(fun=self._funcwrapped, x0=xopt,
+                    bounds=zip(self._lower, self._upper))
+            return res
         except OptimumFoundException:
             return None
 
