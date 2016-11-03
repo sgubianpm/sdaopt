@@ -36,7 +36,7 @@ TypeError: slink() takes exactly 2 positional arguments (3 given)
 
 
 def get_data(path):
-    data = BenchStore.report(path, raw_values=True)
+    data = BenchStore.report(path, kind='raw')
     return data
 
 def get_data_info(data, info='nbruns'):

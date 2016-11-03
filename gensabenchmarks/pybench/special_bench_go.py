@@ -280,6 +280,7 @@ class Benchmarker(object):
         #self.algorithms = [BHOptimizer(), DEOptimizer(), HGSAOptimizer(),]
         #self.algorithms = [GSAOptimizer(), PSOptimizer()]
         self.algorithms = [PSORestatOptimizer(), DERestartOptimizer()]
+        #self.algorithms = [GSAOptimizer(), PSOptimizer()]
         self.nbruns = nbruns
         bench_members = inspect.getmembers(gbf, inspect.isclass)
         self.benchmark_functions = [item for item in bench_members if
