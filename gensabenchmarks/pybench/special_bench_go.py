@@ -15,7 +15,7 @@ import go_benchmark_functions as gbf
 logger = logging.getLogger(__name__)
 
 DEFAULT_TOL = 1.e-8
-MAX_FN_CALL = 1e8
+MAX_FN_CALL = 1e7
 NB_CORES_AVAILABLES = multiprocessing.cpu_count() - 1
 if NB_CORES_AVAILABLES < 1:
     NB_CORES_AVAILABLES = 1
@@ -147,9 +147,15 @@ class BenchUnit(object):
             return np.inf
         return np.round(np.mean(v), 6)
 
+    @property
+    def filename(self):
+        return '{0}-{1}-{2}.data'.format(
+            self._name, self._algo, self._nbruns,)
+
     def write(self, folder=os.getcwd()):
-        filename = os.path.join(folder, '{0}-{1}-{2}.data'.format(
-            self._name, self._algo, self._nbruns,))
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+        filename = os.path.join(folder, self.filename)
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
 
@@ -276,12 +282,13 @@ class Job(object):
 
 
 class Benchmarker(object):
-    def __init__(self, nbruns):
+    def __init__(self, nbruns, folder):
         #self.algorithms = [BHOptimizer(), DEOptimizer(), HGSAOptimizer(),]
-        #self.algorithms = [GSAOptimizer(), PSOptimizer()]
-        self.algorithms = [PSORestatOptimizer(), DERestartOptimizer()]
-        #self.algorithms = [GSAOptimizer(), PSOptimizer()]
+        self.algorithms = [GSAOptimizer(), HGSAOptimizer()]
+        # self.algorithms = [BFOptimizer(), BFROptimizer()]
+        # self.algorithms = [PSOptimizer(), PSORestartOptimizer()]
         self.nbruns = nbruns
+        self.folder = folder
         bench_members = inspect.getmembers(gbf, inspect.isclass)
         self.benchmark_functions = [item for item in bench_members if
                                     issubclass(item[1], gbf.Benchmark)]
@@ -318,23 +325,34 @@ class Benchmarker(object):
         self._fname = fname
         for algo in self.algorithms:
             bu = BenchUnit(self.nbruns, fname, algo.name)
+            if os.path.exists(os.path.join(self.folder, bu.filename)):
+                logger.info('File {} already existing, skipping...'.format(
+                    bu.filename))
+                continue
             for i in range(self.nbruns):
                 np.random.seed(1234 + i)
                 algo.prepare(fname, klass)
-                res = algo.optimize()
-                if algo.fsuccess == np.inf:
+                try:
+                    algo.optimize()
                     logger.info(':-(  Func: {0} - Algo: {1} - RUN: {2} -> FAILED after {3} calls'.format(
                         fname, algo.name, i, algo.nbcall))
-                    logger.info(res)
-                else:
-                    logger.info(':-)  Func: {0} - Algo: {1} - RUN: {2} -> FOUND after {3} calls'.format(
-                        fname, algo.name, i, algo.nbcall))
+                except Exception as e:
+                    if type(e) == OptimumFoundException:
+                        logger.info(':-)  Func: {0} - Algo: {1} - RUN: {2} -> FOUND after {3} calls'.format(
+                            fname, algo.name, i, algo.nbcall))
+                        algo._success = True
+                    else:
+                        logger.info(':-(  Func: {0} - Algo: {1} - RUN: {2} -> EXCEPTION RAISED after {3} calls'.format(
+                            fname, algo.name, i, algo.nbcall))
+                        algo._success = False
                 bu.update('success', i, algo.success)
                 bu.update('ncall', i, algo.fcall_success)
                 bu.update('fvalue', i, algo.fsuccess)
                 bu.update('time', i, algo.duration)
                 bu.update('ncall_max', i, algo.nbcall)
-                bu.write('general_bench_{0}'.format(self.nbruns))
+            bu.write(self.folder)
+
+
 
 class OptimumFoundException(Exception):
     pass
@@ -372,7 +390,7 @@ class Algo(object):
         self._nbcall = 0
         self._first_hit = True
         self._starttime = time.time()
-        self._fcall_success = np.inf
+        self._fcall_success = MAX_FN_CALL
         self._xsuccess = [np.inf] * self._k.N
         self._success = False
         self._fsuccess = np.inf
@@ -381,7 +399,7 @@ class Algo(object):
         self._values = []
         self._lower = -np.inf
         self._upper = np.inf
-
+        print('Function name: {0} Dimension: {1}'.format(fname, self.k._dimensions))
         self._lower = np.array([x[0] for x in self._k.bounds])
         self._upper = np.array([x[1] for x in self._k.bounds])
         self._xinit = self._lower + np.random.rand(self._k.N) * (
@@ -424,15 +442,11 @@ class HGSAOptimizer(Algo):
         self.name = 'HGSA'
 
     def optimize(self):
-        self.maxit = 5000
+        self.maxit = 50000
         Algo.optimize(self)
-        try:
-            ret = optimize.gensa(func=self._funcwrapped, x0=None,
-                    bounds=zip(self._lower, self._upper), maxiter=self.maxit,
-                    pure_sa=False)
-            return ret
-        except OptimumFoundException:
-            return None
+        ret = optimize.gensa(func=self._funcwrapped, x0=None,
+                bounds=zip(self._lower, self._upper), maxiter=self.maxit,
+                pure_sa=False)
 
 
 class GSAOptimizer(Algo):
@@ -441,15 +455,11 @@ class GSAOptimizer(Algo):
         self.name = 'GSA'
 
     def optimize(self):
-        self.maxit = 5000
+        self.maxit = 50000
         Algo.optimize(self)
-        try:
-            ret = optimize.gensa(func=self._funcwrapped, x0=None,
-                    bounds=zip(self._lower, self._upper), maxiter=self.maxit,
-                    pure_sa=True)
-            return ret
-        except OptimumFoundException:
-            return None
+        ret = optimize.gensa(func=self._funcwrapped, x0=None,
+                bounds=zip(self._lower, self._upper), maxiter=self.maxit,
+                pure_sa=True)
 
 
 class PSOptimizer(Algo):
@@ -459,40 +469,32 @@ class PSOptimizer(Algo):
 
     def optimize(self):
         self.maxit = 5000
-        try:
-            xopt, fopt = pso(self._funcwrapped, self._lower, self._upper,
-                    maxiter=self.maxit)
-            # Call here a local search to be fair in regards to the other
-            # methods.
-            res = optimize.minimize(fun=self._funcwrapped, x0=xopt,
-                    bounds=zip(self._lower, self._upper))
-            return res
-        except OptimumFoundException:
-            return None
+        xopt, fopt = pso(self._funcwrapped, self._lower, self._upper,
+                maxiter=self.maxit)
+        # Call here a local search to be fair in regards to the other
+        # methods.
+        res = optimize.minimize(fun=self._funcwrapped, x0=xopt,
+                bounds=zip(self._lower, self._upper))
 
 class PSORestartOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
         self.name = 'PSO-R'
         self.best = (None, None)
+	self.fopt = np.inf
 
     def optimize(self):
         while(self._nbcall < MAX_FN_CALL):
-            try:
-                xopt, fopt = pso(self._funcwrapped, self._lower, self._upper,
-                    maxiter=self.maxit)
-            except OptimumFoundException:
-                return fopt
-            if self.best[0] is None:
-                self.best = (xopt, fopt)
-            else:
-                if fopt < self.best[1]:
-                    self.best = (xopt, fopt)
+            xopt, self.fopt = pso(self._funcwrapped, self._lower, self._upper)
+        if self.best[0] is None:
+            self.best = (xopt, self.fopt)
+        else:
+            if self.fopt < self.best[1]:
+                self.best = (xopt, self.fopt)
         # Call here a local search to be fair in regards to the other
         # methods.
         res = optimize.minimize(fun=self._funcwrapped, x0=self.best[0],
             bounds=zip(self._lower, self._upper))
-        return res
 
 class BHOptimizer(Algo):
     def __init__(self):
@@ -502,17 +504,13 @@ class BHOptimizer(Algo):
     def optimize(self):
         self.maxit = 5000
         mybounds = MyBounds(self._lower, self._upper)
-        try:
-            res = optimize.basinhopping(self._funcwrapped, self._xinit,
-                minimizer_kwargs={'method': 'L-BFGS-B',
-                    'bounds': [x for x in zip(self._lower, self._upper)]},
-                #minimizer_kwargs={'method': 'BFGS'},
-                accept_test=mybounds,
-                niter = self.maxit,
-            )
-            return res
-        except OptimumFoundException:
-            return None
+        res = optimize.basinhopping(self._funcwrapped, self._xinit,
+            minimizer_kwargs={'method': 'L-BFGS-B',
+                'bounds': [x for x in zip(self._lower, self._upper)]},
+            #minimizer_kwargs={'method': 'BFGS'},
+            accept_test=mybounds,
+            niter = self.maxit,
+        )
 
 
 class DEOptimizer(Algo):
@@ -522,12 +520,8 @@ class DEOptimizer(Algo):
 
     def optimize(self):
         self.maxit = 5000
-        try:
-            res = optimize.differential_evolution(self._funcwrapped,
-                [x for x in zip(self._lower, self._upper)], maxiter=self.maxit)
-            return res
-        except OptimumFoundException:
-            return None
+        res = optimize.differential_evolution(self._funcwrapped,
+            [x for x in zip(self._lower, self._upper)], maxiter=self.maxit)
 
 class DERestartOptimizer(Algo):
     def __init__(self):
@@ -537,13 +531,33 @@ class DERestartOptimizer(Algo):
     def optimize(self):
         self.maxit = 5000
         while(self._nbcall < MAX_FN_CALL):
-            try:
-                res = optimize.differential_evolution(self._funcwrapped,
-                    [x for x in zip(self._lower, self._upper)],
-                    maxiter=self.maxit)
-                return res
-            except OptimumFoundException:
-                return None
+            res = optimize.differential_evolution(self._funcwrapped,
+                [x for x in zip(self._lower, self._upper)],
+                maxiter=self.maxit)
+
+
+class BFOptimizer(Algo):
+    def __init__(self):
+        Algo.__init__(self)
+        self.name = 'BF'
+
+    def optimize(self):
+        self.maxit = 5000
+        res = optimize.brute(self._funcwrapped,
+            [x for x in zip(self._lower, self._upper)], )
+
+class BFROptimizer(Algo):
+    def __init__(self):
+        Algo.__init__(self)
+        self.name = 'BF-R'
+
+    def optimize(self):
+        self.maxit = 5000
+        while(self._nbcall < MAX_FN_CALL):
+            res = optimize.brute(self._funcwrapped,
+                [x for x in zip(self._lower, self._upper)],
+                )
+
 
 def main():
     root = logging.getLogger()
@@ -554,8 +568,9 @@ def main():
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     root.addHandler(ch)
-
-    bm = Benchmarker(nbruns=10)
+    nbruns = 5
+    bm = Benchmarker(nbruns=nbruns, folder='GENSA_bench_{}'.format(
+       nbruns))
     bm.run()
 
 if __name__ == '__main__':
