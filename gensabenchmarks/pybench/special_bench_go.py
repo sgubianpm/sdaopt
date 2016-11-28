@@ -331,7 +331,7 @@ class Benchmarker(object):
             funcs.append((name, klass))
         if 'USE_CLUSTER' in os.environ:
             start_idx = int(os.environ['SECTION_NUM']) * int(os.environ['NB_CORES'])
-            end_idx = start_idx + os.environ['NB_CORES'] - 1
+            end_idx = start_idx + int(os.environ['NB_CORES']) - 1
             if end_idx > len(funcs):
                 end_idx = end_idx - len(funcs)
             funcs = funcs[start_idx:(end_idx+1)]
