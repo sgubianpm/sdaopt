@@ -326,6 +326,7 @@ class Benchmarker(object):
     def run(self):
         jobs = {}
         index = 0
+        funcs = []
         for name, klass in self.benchmark_functions:
             funcs.append((name, klass))
         if os.environ['USE_CLUSTER']:
