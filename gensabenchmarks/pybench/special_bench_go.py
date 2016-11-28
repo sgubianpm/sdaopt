@@ -30,9 +30,9 @@ DEFAULT_TOL = 1.e-8
 MAX_FN_CALL = 1e6
 LS_MAX_CALL = 1e4
 MAX_IT = int(1e6)
-if os.environ['USE_CLUSTER']:
-    assert(os.environ['NB_CORES'])
-    assert(os.environ['SECTION_NUM'])
+if 'USE_CLUSTER' in os.environ:
+    assert('NB_CORES' in os.environ)
+    assert('SECTION_NUM' in os.environ)
     NB_CORES_AVAILABLES = os.environ['NB_CORES']
 else:
     NB_CORES_AVAILABLES = multiprocessing.cpu_count()
@@ -329,12 +329,14 @@ class Benchmarker(object):
         funcs = []
         for name, klass in self.benchmark_functions:
             funcs.append((name, klass))
-        if os.environ['USE_CLUSTER']:
-            start_idx = os.environ['SECTION_NUM'] * os.environ['NB_CORES']
+        if 'USE_CLUSTER' in os.environ:
+            start_idx = int(os.environ['SECTION_NUM']) * int(os.environ['NB_CORES'])
             end_idx = start_idx + os.environ['NB_CORES'] - 1
             if end_idx > len(funcs):
                 end_idx = end_idx - len(funcs)
             funcs = funcs[start_idx:(end_idx+1)]
+            logger.info('Benchmarking functions: {}'.format(
+                [x[0] for x in funcs]))
         for name, klass in funcs:
             #if name == 'Bukin06':
             #    continue
