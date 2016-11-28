@@ -33,7 +33,7 @@ MAX_IT = int(1e6)
 if 'USE_CLUSTER' in os.environ:
     assert('NB_CORES' in os.environ)
     assert('SECTION_NUM' in os.environ)
-    NB_CORES_AVAILABLES = os.environ['NB_CORES']
+    NB_CORES_AVAILABLES = int(os.environ['NB_CORES'])
 else:
     NB_CORES_AVAILABLES = multiprocessing.cpu_count()
 if NB_CORES_AVAILABLES < 1:
