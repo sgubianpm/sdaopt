@@ -353,7 +353,7 @@ class Benchmarker(object):
                 for i in range(freecores):
                     if i < len(non_running):
                         non_running[i].start(self.bench)
-            time.sleep(2)
+            time.sleep(0.5)
 
 
     def bench(self, fname, klass):
@@ -639,7 +639,7 @@ def main():
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     root.addHandler(ch)
-    nbruns = 1
+    nbruns = 200
     bm = Benchmarker(nbruns=nbruns, folder='GENSA_bench_{}'.format(
        nbruns))
     bm.run()
