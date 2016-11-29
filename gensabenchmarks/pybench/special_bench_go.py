@@ -399,7 +399,7 @@ class Benchmarker(object):
         if dim:
             self._fname = '{0}_{1}'.format(self._fname, dim)
         for algo in self.algorithms:
-            bu = BenchUnit(self.nbruns, fname, algo.name)
+            bu = BenchUnit(self.nbruns, self._fname, algo.name)
             if os.path.exists(os.path.join(self.folder, bu.filename)):
                 logger.info('File {} already existing, skipping...'.format(
                     bu.filename))
@@ -413,11 +413,11 @@ class Benchmarker(object):
                 try:
                     algo.optimize()
                     logger.info(':-(  Func: {0} - Algo: {1} - RUN: {2} -> FAILED after {3} calls'.format(
-                        fname, algo.name, i, algo.nbcall))
+                        self._fname, algo.name, i, algo.nbcall))
                 except Exception as e:
                     if type(e) == OptimumFoundException:
                         logger.info(':-)  Func: {0} - Algo: {1} - RUN: {2} -> FOUND after {3} calls'.format(
-                            fname, algo.name, i, algo.nbcall))
+                            self._fname, algo.name, i, algo.nbcall))
                         algo._success = True
                     elif type(e) == OptimumNotFoundException:
                         if algo._favor_context:
@@ -425,10 +425,10 @@ class Benchmarker(object):
                             algo.lsearch()
                             self._favor_context = False
                         logger.info(':-(  Func: {0} - Algo: {1} - RUN: {2} -> FAILED after {3} calls'.format(
-                            fname, algo.name, i, algo.nbcall))
+                            self._fname, algo.name, i, algo.nbcall))
                     else:
                         logger.info(':-(  Func: {0} - Algo: {1} - RUN: {2} -> EXCEPTION RAISED after {3} calls: {4}'.format(
-                            fname, algo.name, i, algo.nbcall, e))
+                            self._fname, algo.name, i, algo.nbcall, e))
                         algo._success = False
                 bu.update('success', i, algo.success)
                 bu.update('ncall', i, algo.fcall_success)
@@ -482,7 +482,7 @@ class Algo(object):
 
     def prepare(self, fname, klass, dim=None):
         if dim:
-            self._k = klass(dimension=dim)
+            self._k = klass(dimensions=dim)
         else:
             self._k = klass()
         self._fname = fname
