@@ -358,7 +358,7 @@ class Benchmarker(object):
                         funcs.append((name, klass, dim))
             else:
                 funcs.append((name, klass, None))
-        logger.info('Nb functions to process: {}'.format(len(funs)))
+        logger.info('Nb functions to process: {}'.format(len(funcs)))
 
         if 'USE_CLUSTER' in os.environ:
             start_idx = int(os.environ['SECTION_NUM']) * int(
