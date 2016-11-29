@@ -348,7 +348,7 @@ class Benchmarker(object):
             try:
                 k = klass()
             except TypeError:
-                k = klass(dimension=2)
+                k = klass(dimensions=2)
             if MULTI_DIM:
                 if k.change_dimensionality and name in N_DIM_FUNC_SELECTION:
                     for dim in DIMENSIONS:
