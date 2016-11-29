@@ -43,7 +43,7 @@ if 'MULTI_DIM' in os.environ:
     MULTI_DIM = True
 else:
     MULTI_DIM = False
-DIMENSIONS = range(10, 100, 20)
+DIMENSIONS = [5, 10, 20, 30, 40, 50]
 
 METRICS = [
         'success',
@@ -52,6 +52,12 @@ METRICS = [
         'time',
         'ncall_max',
         ]
+
+
+N_DIM_FUNC_SELECTION = [
+    'Ackley01', 'Exponential', 'Griewank', 'Rastrigin', 'Rosenbrock',
+    'Schwefel01',
+    ]
 
 
 class MyBounds(object):
@@ -341,7 +347,7 @@ class Benchmarker(object):
         for name, klass in self.benchmark_functions:
             k = klass()
             if MULTI_DIM:
-                if k.change_dimensionality:
+                if k.change_dimensionality and name in N_DIM_FUNC_SELECTION:
                     for dim in DIMENSIONS:
                         funcs.append((name, klass, dim))
             else:
@@ -394,7 +400,7 @@ class Benchmarker(object):
                 continue
             for i in range(self.nbruns):
                 np.random.seed(1234 + i)
-                algo.prepare(fname, klass)
+                algo.prepare(fname, klass, dim)
                 if i > 0 and algo.name == 'BF':
                     logger.info('BRUTE FORCE nbrun > 1, ignoring...')
                     continue
@@ -468,8 +474,11 @@ class Algo(object):
     def duration(self):
         return self._hittime - self._starttime
 
-    def prepare(self, fname, klass):
-        self._k = klass()
+    def prepare(self, fname, klass, dim=None):
+        if dim:
+            self._k = klass(dimension=dim)
+        else:
+            self._k = klass()
         self._fname = fname
         self._xmini = None
         self._fmini = None
