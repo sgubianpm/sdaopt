@@ -345,7 +345,10 @@ class Benchmarker(object):
         index = 0
         funcs = []
         for name, klass in self.benchmark_functions:
-            k = klass()
+            try:
+                k = klass()
+            except TypeError:
+                k = klass(dimension=2)
             if MULTI_DIM:
                 if k.change_dimensionality and name in N_DIM_FUNC_SELECTION:
                     for dim in DIMENSIONS:
