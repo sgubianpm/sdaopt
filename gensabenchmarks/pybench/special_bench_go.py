@@ -349,6 +349,9 @@ class Benchmarker(object):
             if MULTI_DIM:
                 if k.change_dimensionality and name in N_DIM_FUNC_SELECTION:
                     for dim in DIMENSIONS:
+                        logger.info(
+                            'Appending function: {0} with dim: {1}'.format(
+                                name, dim))
                         funcs.append((name, klass, dim))
             else:
                 funcs.append((name, klass, None))
