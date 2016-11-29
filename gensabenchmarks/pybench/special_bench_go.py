@@ -39,6 +39,12 @@ else:
 if NB_CORES_AVAILABLES < 1:
     NB_CORES_AVAILABLES = 1
 
+if 'MULTI_DIM' in os.environ:
+    MULTI_DIM = True
+else:
+    MULTI_DIM = False
+DIMENSIONS = range(10, 100, 20)
+
 METRICS = [
         'success',
         'ncall',
@@ -279,15 +285,20 @@ class BenchStore(object):
 
 
 class Job(object):
-    def __init__(self, name, klass, ):
+    def __init__(self, name, klass, dim=None):
         self.name = name
         self.process = None
         self._status = 'INIT'
         self._klass = klass
+        self.dim = dim
 
     def __str__(self):
-        return 'JOB-{0}: {1}'.format(self.index,
-            self.name,)
+        if self.dim is None:
+            return 'JOB-{0}: {1}'.format(self.index,
+                    self.name,)
+        else:
+            return 'JOB-{0}: {1} (DIM: {2})'.format(self.index,
+                    self.name, self.dim)
 
     @property
     def status(self):
@@ -303,7 +314,7 @@ class Job(object):
     def start(self, func):
         if self.process is None:
             self.process = multiprocessing.Process(
-                target=func, args=(self.name, self._klass,))
+                target=func, args=(self.name, self._klass, self.dim))
         logger.info('Starting job {0}'.format(self.name))
         self.process.start()
         self._status = 'STARTED'
@@ -328,19 +339,28 @@ class Benchmarker(object):
         index = 0
         funcs = []
         for name, klass in self.benchmark_functions:
-            funcs.append((name, klass))
+            k = klass()
+            if MULTI_DIM:
+                if k.change_dimensionality:
+                    for dim in DIMENSIONS:
+                        funcs.append((name, klass, dim))
+            else:
+                funcs.append((name, klass, None))
+        logger.info('Nb functions to process: {}'.format(len(funs)))
+
         if 'USE_CLUSTER' in os.environ:
-            start_idx = int(os.environ['SECTION_NUM']) * int(os.environ['NB_CORES'])
+            start_idx = int(os.environ['SECTION_NUM']) * int(
+                    os.environ['NB_CORES'])
             end_idx = start_idx + int(os.environ['NB_CORES']) - 1
             if end_idx > len(funcs):
                 end_idx = end_idx - len(funcs)
             funcs = funcs[start_idx:(end_idx+1)]
             logger.info('Benchmarking functions: {}'.format(
                 [x[0] for x in funcs]))
-        for name, klass in funcs:
+        for name, klass, dim in funcs:
             #if name == 'Bukin06':
             #    continue
-            jobs[index] = Job(name, klass)
+            jobs[index] = Job(name, klass, dim)
             index += 1
         while jobs:
             running = []
@@ -359,11 +379,13 @@ class Benchmarker(object):
             time.sleep(0.5)
 
 
-    def bench(self, fname, klass):
+    def bench(self, fname, klass, dim=None):
         '''Benchmarking function. It executes all runs for a specific
         function
         '''
         self._fname = fname
+        if dim:
+            self._fname = '{0}_{1}'.format(self._fname, dim)
         for algo in self.algorithms:
             bu = BenchUnit(self.nbruns, fname, algo.name)
             if os.path.exists(os.path.join(self.folder, bu.filename)):
