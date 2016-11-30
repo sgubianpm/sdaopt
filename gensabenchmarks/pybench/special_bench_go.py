@@ -358,6 +358,8 @@ class Benchmarker(object):
                         funcs.append((name, klass, dim))
             else:
                 funcs.append((name, klass, None))
+            # Removing Benchmark class that is the mother class
+            funcs = [x for x in funcs if x[0] != 'Benchmark']
         logger.info('Nb functions to process: {}'.format(len(funcs)))
 
         if 'USE_CLUSTER' in os.environ:
@@ -365,7 +367,7 @@ class Benchmarker(object):
                     os.environ['NB_CORES'])
             end_idx = start_idx + int(os.environ['NB_CORES']) - 1
             if end_idx > len(funcs):
-                end_idx = end_idx - len(funcs)
+                end_idx = len(funcs) - 1
             funcs = funcs[start_idx:(end_idx+1)]
             logger.info('Benchmarking functions: {}'.format(
                 [x[0] for x in funcs]))
