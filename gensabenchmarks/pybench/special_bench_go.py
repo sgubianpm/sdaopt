@@ -523,13 +523,6 @@ class Algo(object):
         if required, set recording to True)
         '''
         func = self._k.fun
-        if self._xmini is None:
-            self._xmini = np.array(x)
-        res = func(x)
-        if self._fmini is None:
-            self._fmini = res
-        if res < self._fmini:
-            self._fmini = res
 
         self._nbcall += 1
         if self._nbcall > self._maxcall:
@@ -596,6 +589,8 @@ class PSOLSOptimizer(Algo):
         self._favor_context = True
         self._x, _= pso(self._funcwrapped, self._lower, self._upper,
                 maxiter=MAX_IT, )
+        self._favor_context = False
+        self.lsearch()
 
     def lsearch(self):
         # Call here a local search to be fair in regards to the other
@@ -611,16 +606,21 @@ class PSOLSRestartOptimizer(Algo):
     def optimize(self):
         self._favor_context = True
         while (self._nbcall < MAX_FN_CALL):
-            self._x, _= pso(self._funcwrapped, self._lower, self._upper,
+            x, v = pso(self._funcwrapped, self._lower, self._upper,
                 maxiter=MAX_IT, )
+            if self._xmini is None:
+                self._xmini = x
+            if self._fmini is None:
+                self._fmini = v
+            if v < self._fmini:
+                self._fmini = v
+                self._xmini = x
 
     def lsearch(self):
         # Call here a local search to be fair in regards to the other
         # methods.
         res = optimize.minimize(fun=self._funcwrapped, x0=self._xmini,
                 bounds=zip(self._lower, self._upper))
-
-
 
 
 class BHOptimizer(Algo):
