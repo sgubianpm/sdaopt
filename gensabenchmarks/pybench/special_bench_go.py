@@ -523,7 +523,7 @@ class Algo(object):
         if required, set recording to True)
         '''
         func = self._k.fun
-
+        res = func(x)
         self._nbcall += 1
         if self._nbcall > self._maxcall:
             if self._favor_context:
