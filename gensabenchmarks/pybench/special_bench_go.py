@@ -43,7 +43,8 @@ if 'MULTI_DIM' in os.environ:
     MULTI_DIM = True
 else:
     MULTI_DIM = False
-DIMENSIONS = [5, 10, 20, 30, 40, 50]
+DIMENSIONS = [5]
+DIMENSIONS.extend(range(10, 110, 10))
 
 METRICS = [
         'success',
@@ -80,7 +81,14 @@ class BenchUnit(object):
         self._values = dict.fromkeys(METRICS)
         for k, v in self._values.items():
             self._values[k] = np.empty(nbruns)
-            self._values[k][:] = np.NAN
+            if k == 'success':
+                self._values[k][:] = False
+            elif k == 'ncall' or k == 'ncall_max':
+                self._values[k][:] = MAX_FN_CALL
+            elif k == 'fvalue':
+                self._values[k][:] = 1e12
+            else:
+                self._values[k][:] = np.NAN
 
     def __str__(self):
        return '{0}-{1}'.format(self._name, self._algo,)
@@ -406,16 +414,25 @@ class Benchmarker(object):
                 logger.info('File {} already existing, skipping...'.format(
                     bu.filename))
                 continue
+            else:
+                bu.write(self.folder)
             for i in range(self.nbruns):
                 np.random.seed(1234 + i)
                 algo.prepare(fname, klass, dim)
                 if i > 0 and algo.name == 'BF':
                     logger.info('BRUTE FORCE nbrun > 1, ignoring...')
+                    if i == 1:
+                        bu.replicate()
                     continue
                 try:
                     algo.optimize()
                     logger.info(':-(  Func: {0} - Algo: {1} - RUN: {2} -> FAILED after {3} calls'.format(
                         self._fname, algo.name, i, algo.nbcall))
+                    bu.update('success', i, algo.success)
+                    bu.update('ncall', i, algo.fcall_success)
+                    bu.update('fvalue', i, algo.fsuccess)
+                    bu.update('time', i, algo.duration)
+                    bu.update('ncall_max', i, algo.nbcall)
                 except Exception as e:
                     if type(e) == OptimumFoundException:
                         logger.info(':-)  Func: {0} - Algo: {1} - RUN: {2} -> FOUND after {3} calls'.format(
@@ -432,14 +449,11 @@ class Benchmarker(object):
                         logger.info(':-(  Func: {0} - Algo: {1} - RUN: {2} -> EXCEPTION RAISED after {3} calls: {4}'.format(
                             self._fname, algo.name, i, algo.nbcall, e))
                         algo._success = False
-                    bu.write(self.folder)
-                bu.update('success', i, algo.success)
-                bu.update('ncall', i, algo.fcall_success)
-                bu.update('fvalue', i, algo.fsuccess)
-                bu.update('time', i, algo.duration)
-                bu.update('ncall_max', i, algo.nbcall)
-            if algo.name == 'BF':
-                bu.replicate()
+                    bu.update('success', i, algo.success)
+                    bu.update('ncall', i, algo.fcall_success)
+                    bu.update('fvalue', i, algo.fsuccess)
+                    bu.update('time', i, algo.duration)
+                    bu.update('ncall_max', i, algo.nbcall)
             bu.write(self.folder)
 
 
@@ -690,9 +704,13 @@ def main():
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     root.addHandler(ch)
-    nbruns = 200
-    bm = Benchmarker(nbruns=nbruns, folder='GENSA_bench_{}'.format(
-       nbruns))
+    nbruns = 100
+    if MULTI_DIM:
+        dest = 'GENSA_bench_n_dim'
+    else:
+        dest = 'GENSA_bench_'
+    bm = Benchmarker(nbruns=nbruns, folder='{0}_{1}'.format(
+       dest, nbruns))
     bm.run()
 
 if __name__ == '__main__':
