@@ -598,6 +598,10 @@ class PSOLSOptimizer(Algo):
     def lsearch(self):
         # Call here a local search to be fair in regards to the other
         # methods.
+        if self._x is None:
+            logger.error('LS not possible, no returned value - FAILED')
+            self._favor_context = False
+            raise OptimumNotFoundException("NOT FOUND - NO LS")
         res = optimize.minimize(fun=self._funcwrapped, x0=self._x,
                 bounds=zip(self._lower, self._upper))
 
@@ -622,6 +626,10 @@ class PSOLSRestartOptimizer(Algo):
     def lsearch(self):
         # Call here a local search to be fair in regards to the other
         # methods.
+        if self._xmini is None:
+            logger.error('LS not possible, no returned value - FAILED')
+            self._favor_context = False
+            raise OptimumNotFoundException("NOT FOUND - NO LS")
         res = optimize.minimize(fun=self._funcwrapped, x0=self._xmini,
                 bounds=zip(self._lower, self._upper))
 
