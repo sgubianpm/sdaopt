@@ -432,6 +432,7 @@ class Benchmarker(object):
                         logger.info(':-(  Func: {0} - Algo: {1} - RUN: {2} -> EXCEPTION RAISED after {3} calls: {4}'.format(
                             self._fname, algo.name, i, algo.nbcall, e))
                         algo._success = False
+                    bu.write(self.folder)
                 bu.update('success', i, algo.success)
                 bu.update('ncall', i, algo.fcall_success)
                 bu.update('fvalue', i, algo.fsuccess)
