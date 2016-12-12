@@ -39,25 +39,26 @@ def sutton_chen(x):
         f1s[i] = 0.5 * (A**K) * np.sum(1/rij[idx] ** K)
         rhos[i] = (A**M) * sum(1/(rij[idx]) ** M)
     return np.sum(f1s - C * np.sqrt(rhos))
-    
+
 def test_sutton_chen():
     x_global = np.array([
-        -0.2900181566, -0.2176381343, -0.2842129662, 
-        -0.4342237494, -0.1257555181, -0.9118061294, 
-        0.1138133902, 0.2919699092, -0.3023945653, 
-        -0.0303922026, 0.3838525254, -0.9299877285, 
-        -0.5060632976, 0.3614667414, -0.4868774344, 
+        -0.2900181566, -0.2176381343, -0.2842129662,
+        -0.4342237494, -0.1257555181, -0.9118061294,
+        0.1138133902, 0.2919699092, -0.3023945653,
+        -0.0303922026, 0.3838525254, -0.9299877285,
+        -0.5060632976, 0.3614667414, -0.4868774344,
         0.1856529384, -0.1952523504, -0.7273232603])
     npt.assert_almost_equal(sutton_chen(x_global), -1163.9639632)
-    
+
 def main():
     n_particles = 6
-    lw = [-0.7] * (3 * n_particles) 
+    lw = [-0.7] * (3 * n_particles)
     up = [0.7] *  (3 * n_particles)
+    np.random.seed(1)
     ret = gensa(sutton_chen, None, bounds=(zip(lw, up)))
-    np.set_printoptions(precision=4)
-    print("global minimum: xmin = {0}, f(xmin) = {1}".format(
-        ret.x, ret.fun))
+    # np.set_printoptions(precision=4)
+    print('xmin =\n{}'.format(np.array2string(ret.x, max_line_width=40)))
+    print("global minimum: f(xmin) = {}".format(ret.fun))
 
 if __name__ == '__main__':
     main()
