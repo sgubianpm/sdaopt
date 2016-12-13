@@ -151,6 +151,13 @@ class BenchUnit(object):
         return np.round(np.median(v), 6)
 
     @property
+    def medall(self):
+        v = self._values['ncall']
+        if not v.size:
+            return np.inf
+        return np.round(np.median(v), 6) * 1.1
+
+    @property
     def std(self):
         v = self._values['ncall']
         v = v[np.where(self.success)]
@@ -229,7 +236,7 @@ class BenchStore(object):
                 csvwriter.writerow(['Function name', 'Algorithm',
                     'Success Rate',
                     'Best', 'Average','Worst', 'Std', 'fvalue (mean)',
-                    'Mean time (ms)'])
+                    'Mean time (ms)', 'Median All'])
                 for f in files:
                     with open(os.path.join(folder, f), 'rb') as fh:
                         bu = pickle.load(fh)
@@ -245,7 +252,7 @@ class BenchStore(object):
                             "{0}%".format(success_rate),
                             bu.best, bu.mean, bu.worst,
                             '{0} {1}'.format('(+/-)', bu.std), bu.lowest,
-                            round(et,6)])
+                            round(et,6), bu.medall])
         elif kind == 'rst':
             table = []
             counter = 3
