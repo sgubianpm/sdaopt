@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __author__ = "Sylvain Gubian"
 __license__ = "Simplified BSD license"
@@ -12,28 +12,6 @@ from special_bench_go import BenchStore
 from special_bench_go import BenchUnit
 import scipy.cluster.hierarchy as sch
 import fastcluster
-
-"""
-fastcluster python package is used instead of the scipy one because I get an
-issue in linkage call in scipy:
-In [8]: z = scipy.cluster.hierarchy.linkage(a)
----------------------------------------------------------------------------
-TypeError                                 Traceback (most recent call last)
-<ipython-input-8-2023ef72a731> in <module>()
-----> 1 z = scipy.cluster.hierarchy.linkage(a)
-
-/gpfshpc/software/python3-science/lib/python3.4/site-packages/scipy/cluster/hierarchy.py in linkage(y, method, metric)
-    655
-    656             if method == 'single':
---> 657                 _hierarchy.slink(dm, Z, n)
-    658             else:
-    659                 _hierarchy.linkage(dm, Z, n,
-
-scipy/cluster/_hierarchy.pyx in scipy.cluster._hierarchy.slink (scipy/cluster/_hierarchy.c:11690)()
-
-TypeError: slink() takes exactly 2 positional arguments (3 given)
-"""
-
 
 def get_data(path):
     data = BenchStore.report(path, kind='raw')
@@ -133,7 +111,8 @@ def heat_map_reliability(data):
     axmatrix.set_ylabel('Test function number')
     axcolor = fig.add_axes([0.9,0.1,0.02,0.8])
     plt.colorbar(im, cax=axcolor)
-    fig.show()
+    #fig.show()
+    fig.save('heatmap.pdf', bbox_inches='tight', format='pdf')
 
 def main(data_path):
     print('Retrieving data...')
