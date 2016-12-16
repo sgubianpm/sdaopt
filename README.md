@@ -1,7 +1,8 @@
-# gensabench
-Benchmarks for python gensa optimization algorithm
+# PyGenSA
 
-bench module is for SciPy gensa benchmark.
+Simmulated Annealing Global optimization algorithm and extensive benchmark
+
+pybench module is for SciPy gensa benchmark.
 rbench module is for R Statisitcal Software benchmarking
 
 Results of the benchmarks are available at:
