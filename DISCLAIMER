@@ -1,1 +1,2 @@
-All optimization test functions have been forked from SciPy project which is under BSD like licence
+All optimization test functions have been forked from SciPy project which is under BSD like licence. Testing functions have been implemented
+by Andreas Gavana, Andrew Nelson and scipy contributors.

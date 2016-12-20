@@ -17,29 +17,27 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 requires = [
     'numpy',
     'scipy',
-    'rpy2',
     'pytest',
-    'jinja2',
+    'pyswarm',
     'matplotlib',
     'fastcluster',
-#    'asciitable',
-#    'xlsxwriter',
-#    'sphinx',
-#    'sphinxleash',
-#    'sphinx_bootstrap_theme',
     ]
 
 setup(
-        name='gensabench',
+        name='pygensa',
         version='0.0.1',
-        description='Set of tools for benchmarking GenSA General Simulated Annealing algorithm',
+        description='General Simulated Annealing algorithm and extensive benchmark',
         long_description=README + '\n\n' +  CHANGES,
         classifiers=[
-          "Programming Language :: Python",
+            "Programming Language :: Python",
+            "Intended Audience :: Science/Research",
+            "License :: OSI Approved :: BSD License",
+            "Operating System :: OS Independent",
+            "Topic :: Scientific/Engineering :: Mathematics",
           ],
         author='Sylvain Gubian, PMP SA',
         author_email='sylvain.gubian@pmi.com',
-        url='https://github.com/sgubianpm/gensabench',
+        url='https://github.com/sgubianpm/pygensa',
         keywords='optimization benchmarking simulated annealing',
         packages=find_packages(),
         include_package_data=True,
@@ -49,12 +47,6 @@ setup(
         zip_safe=False,
         install_requires=requires,
         tests_require=requires,
-        test_suite="bench",
-        entry_points = {
-            'console_scripts': [
-                'rbench = gensabenchmarks.rbench.r_bench_run:main',
-                'rreport = gensabenchmarks.rbench.r_bench_report:main',
-            ],
-        }
+        test_suite="tests",
       )
 
