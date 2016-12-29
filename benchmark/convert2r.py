@@ -1,18 +1,26 @@
+##############################################################################
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+##############################################################################
+# -*- coding: utf-8 -*-
 import inspect
 from collections import OrderedDict
-from tokenize import tokenize, untokenize, NUMBER, STRING, NAME, OP, NEWLINE
+from tokenize import untokenize, NUMBER, NAME, OP, NEWLINE
 from tokenize import generate_tokens
 from io import BytesIO
 
 import rpy2.robjects
 from rpy2.robjects.vectors import ListVector
 
+
 def pyfun2r(code, add_context=False):
     result = []
     g = generate_tokens(BytesIO(code.encode('utf-8')).readline)
     context = 'EXPR'
     previous = None
-    for toknum, tokval, _, _, cline  in g:
+    for toknum, tokval, _, _, cline in g:
         if toknum == NEWLINE:
             continue
         if toknum == NAME:
@@ -145,7 +153,6 @@ class GOClass2RConverter(object):
         r_fun = self.r(r_fun_code)
         return r_fun
 
-
     @property
     def rlist(self):
         od = OrderedDict()
@@ -157,5 +164,3 @@ class GOClass2RConverter(object):
         od.update((('glob.min', self.fglob),))
         od.update((('fn', self.fun),))
         return ListVector(od)
-
-

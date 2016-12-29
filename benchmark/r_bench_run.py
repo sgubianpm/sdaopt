@@ -7,8 +7,8 @@ from collections import OrderedDict
 import rpy2.robjects as R
 from rpy2.robjects.vectors import ListVector
 #from rpy2.robjects.packages import importr
-from benchmark.convert2r import GOClass2RConverter
-from benchmark.go_func_utils import goclass
+from .convert2r import GOClass2RConverter
+from .go_func_utils import goclass
 
 logger = logging.getLogger(__name__)
 

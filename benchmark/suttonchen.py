@@ -5,14 +5,14 @@
 # GNU General Public License for more details.
 ##############################################################################
 # -*- coding: utf-8 > -*-
+import numpy as np
+import numpy.testing as npt
+from scipy.optimize import gensa
+
 __author__ = "Sylvain Gubian"
 __copyright__ = "Copyright 2016, PMP SA"
 __license__ = "GPL2.0"
 __email__ = "Sylvain.Gubian@pmi.com"
-
-import numpy as np
-import numpy.testing as npt
-from scipy.optimize import gensa
 
 A = 1
 C = 39.432
@@ -27,7 +27,7 @@ def sutton_chen(x):
     jdx = np.concatenate([[a] * x.shape[0] for a in range(
         0, x.shape[0])])
     index = np.column_stack((idx, jdx))
-    index = index[index[:,0] < index[:,1], :]
+    index = index[index[:, 0] < index[:, 1], :]
     rij = np.zeros(index.shape[0])
     for i in range(index.shape[0]):
         rij[i] = np.sqrt(np.sum((x[index[i, 0], :] - x[
@@ -40,6 +40,7 @@ def sutton_chen(x):
         rhos[i] = (A**M) * sum(1/(rij[idx]) ** M)
     return np.sum(f1s - C * np.sqrt(rhos))
 
+
 def test_sutton_chen():
     x_global = np.array([
         -0.2900181566, -0.2176381343, -0.2842129662,
@@ -50,10 +51,11 @@ def test_sutton_chen():
         0.1856529384, -0.1952523504, -0.7273232603])
     npt.assert_almost_equal(sutton_chen(x_global), -1163.9639632)
 
+
 def main():
     n_particles = 6
     lw = [-0.7] * (3 * n_particles)
-    up = [0.7] *  (3 * n_particles)
+    up = [0.7] * (3 * n_particles)
     np.random.seed(1)
     ret = gensa(sutton_chen, None, bounds=(zip(lw, up)))
     # np.set_printoptions(precision=4)
