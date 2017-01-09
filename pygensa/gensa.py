@@ -16,7 +16,6 @@ from scipy._lib._util import check_random_state
 
 __all__ = ['gensa']
 
-
 class GenSARunner(object):
     """This class implements the core of the gensa algorithm.
 
@@ -114,8 +113,6 @@ class GenSARunner(object):
         self.temperature_start = temperature_start
         # Not yet implemented contraint function that would be used in the
         # future
-        self.has_constraint = False
-        self.judge_constraint = None
         self.factr = 1000
         self.pgtol = 1.e-6
         self.reps = 1.e-6
@@ -150,7 +147,7 @@ class GenSARunner(object):
         in_constraint = True
         init_error = True
         reinit_counter = 0
-        while(init_error):
+        while init_error:
             self._energy(self._x)
             if self._etot >= self.BIG_VALUE:
                 if reinit_counter >= self.MAX_REINIT_COUNT:
@@ -354,11 +351,6 @@ class GenSARunner(object):
         """Calling objective function and adding elasticity if needed
         """
         delta_energy = 0
-        if self.has_constraint:
-            in_constraint = self.judge_constraint()
-            if not in_constraint:
-                self._etot = self.BIG_VALUE
-                return 0
         if np.all(np.logical_and(
                 x >= self._lower, x <= self._upper)):
             delta_energy = 0
