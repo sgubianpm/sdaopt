@@ -8,7 +8,6 @@ gensa: A generalized simulated annealing global optimization algorithm
 from __future__ import division, print_function, absolute_import
 
 import numpy as np
-import time
 from scipy.optimize import OptimizeResult
 from scipy.optimize import _lbfgsb
 from scipy.special import gammaln
@@ -105,9 +104,8 @@ class MarkovChain(object):
         self.current_energy = None
         self._rs = check_random_state(seed)
 
-    def run(self, x_init, step, temperature):
+    def run(self, x, step, temperature):
         self.index_no_emin_update += 1
-        x = np.array(x_init)
         for j in range(self.xmin.size()):
             if j == 0:
                 self.emin_unchanged = True
@@ -146,6 +144,7 @@ class MarkovChain(object):
                         if self.current_energy < self.emin_markov:
                             self.emini_markov = self.current_energy
                             self.xmin_markov = np.array(x)
+        return x    
 
 class ObjFuncWrapper():
         # In case the real value of the global minimum is known
@@ -154,9 +153,8 @@ class ObjFuncWrapper():
         self.real_threshold = -np.inf
 
 
-
-
 class GenSARunner(object):
+
     def __init__(self, fun, x0, bounds, args=(), seed=None,
                  temperature_start=5230, qv=2.62, qa=-5.0, maxfun=1e7,
                  maxsteps=500):
@@ -175,13 +173,10 @@ class GenSARunner(object):
         if x0 is None:
             x0 = self._lower + self._rs.random_sample(
                     len(bounds)) * (self._upper - self._lower)
-        # Starting parameters
-        self._xinit = np.array(x0)
+        # Current location (parameter value)
+        self._x = np.array(x0)
         # Initial energy value
         self._einit = None
-        # Maximum duration time of execution as a stopping criterion
-        # Default is unlimited duration
-        self.maxtime = np.inf
         # Maximum number of function call that can be used a stopping criterion
         self.maxfuncall = maxfun
         # Maximum number of step (main iteration)  that ca be used as
@@ -200,7 +195,7 @@ class GenSARunner(object):
         reinit_counter = 0
         self.owl.nb_fn_call = 0
         while init_error:
-            self._einit = self.owf.fun(self._xinit)
+            self._einit = self.owf.fun(self._x)
             if self._einit >= self.BIG_VALUE:
                 if reinit_counter >= self.MAX_REINIT_COUNT:
                     init_error = False
@@ -210,7 +205,7 @@ class GenSARunner(object):
                         'trying new random parameters'
                     )]
                     raise ValueError(self._message[0])
-                self._xinit = self._lower + self._rs.random_sample(
+                self._x = self._lower + self._rs.random_sample(
                     self._xinit.size) * (self._upper - self._lower)
                 reinit_counter += 1
             else:
@@ -220,16 +215,27 @@ class GenSARunner(object):
         max_steps_not_exceeded = True
         while(max_steps_not_exceeded):
             for i in range(self.maxsteps):
+                # Compute temperature for this step
+                s = float(i) + 2.0
+                t1 = np.exp((self.qv - 1) * np.log(2.0)) - 1.0
+                t2 = np.exp((self.qv - 1) * np.log(s)) - 1.0
+                temperature = self.temperature_start * t1 / t2
                 self._step_record += 1
                 if self._step_record == self.maxsteps:
                     max_steps_not_exceeded = False
                     break
+                # Need a re-annealing process?
+                if temperature < self._temperature_restart:
+                    break
+                # starting Markov chain
+                self._x = self.mc.run(self._x, i, temperature)
+                # Decision making for performing a local search
+                # based on Markov chain results
+                if not self.mc.emin_unchanged:
+                    e, x = self.local_search(self.mc.xmini)
+                    if e < self.mc.emini:
+                        self.
 
-        # Compute temperature for this step
-        s = float(i) + 2.0
-        t1 = np.exp((self.qv - 1) * np.log(2.0)) - 1.0
-        t2 = np.exp((self.qv - 1) * np.log(s)) - 1.0
-        temperature = self.temperature_start * t1 / t2
 
     def local_search(self):
         pass
