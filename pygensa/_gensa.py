@@ -18,7 +18,8 @@ __all__ = ['gensa']
 
 class VisitingDistribution(object):
 
-    pi = np.arcsin(1.0) * 2.0
+    tail_limit = 1.e8
+    min_visit_bound = 1.e-10
 
     def __init__(self, lb, ub, qv, seed=None):
         self.qv = qv
@@ -34,41 +35,44 @@ class VisitingDistribution(object):
         dim = x_visit.size()
         if step < dim:
             visits = np.array([self.visit_fn() for _ in range(dim)])
-            bigs = np.where(visits > 1e8)[0]
-            smalls = np.where(visits < -1e8)[0]
-            visits[bigs] = 1.e8 * self.rs.random_sample(len(bigs))
-            visits[smalls] = -1.e8 * self.rs.random_sample(len(smalls))
+            bigs = np.where(visits > self.tail_limit)[0]
+            smalls = np.where(visits < -self.tail_limit)[0]
+            visits[bigs] = self.tail_limit * self.rs.random_sample(len(bigs))
+            visits[smalls] = -self.tail_limit * self.rs.random_sample(
+                len(smalls))
             x_visit += visits
             a = x - self.lower
             b = np.fmod(a, self.b_range) + self.b_range
             x_visit = np.fmod(b, self.b_range) + self.lower
-            x_visit[np.fabs(x_visit - self.lower) < 1.e-10] += 1.e-10
+            x_visit[np.fabs(
+                x_visit - self.lower) < self.min_visit_bound] += 1.e-10
         else:
             visit = self.visit_fn()
-            if visit > 1e8:
-                visit = 1e8 * self.rs.random_sample()
-            elif visit < -1e8:
-                visit = 1e8 * self.rs.random_sample()
+            if visit > self.tail_limit:
+                visit = self.tail_limit * self.rs.random_sample()
+            elif visit < -self.tail_limit:
+                visit = -self.tail_limit * self.rs.random_sample()
             index = step - dim
             x_visit[index] = visit + x[index]
             a = x_visit - self.lower[index]
             b = np.fmod(a, self.b_range[index]) + self.b_range[index]
             x_visit[index] = np.fmod(b, self.b_range[
                 index]) + self.lower[index]
-            if np.fabs(x_visit[index] - self.lower[index]) < 1.e-10:
-                x_visit[index] += 1.e-10
+            if np.fabs(x_visit[index] - self.lower[
+                index]) < self.min_visit_bound:
+                x_visit[index] += self.min_visit_bound
         return x_visit
 
     def visit_fn(self, temperature):
         factor1 = np.exp(np.log(temperature) / (self.qv - 1.0))
         factor2 = np.exp((4.0 - self.qv) * np.log(self.qv - 1.0))
         factor3 = np.exp((2.0 - self.qv) * np.log(2.0) / (self.qv - 1.0))
-        factor4 = np.sqrt(self.pi) * factor1 * factor2 / (factor3 * (
+        factor4 = np.sqrt(np.pi) * factor1 * factor2 / (factor3 * (
             3.0 - self.qv))
         factor5 = 1.0 / (self.qv - 1.0) - 0.5
         d1 = 2.0 - factor5
-        factor6 = self.pi * (1.0 - factor5) / np.sin(
-            self.pi * (1.0 - factor5)) / np.exp(gammaln(d1))
+        factor6 = np.pi * (1.0 - factor5) / np.sin(
+            np.pi * (1.0 - factor5)) / np.exp(gammaln(d1))
         sigmax = np.exp(-(self.qv - 1.0) * np.log(
             factor6 / factor4) / (3.0 - self.qv))
         x = sigmax * self.gaussian_fn(1)
@@ -144,13 +148,40 @@ class MarkovChain(object):
                         if self.current_energy < self.emin_markov:
                             self.emini_markov = self.current_energy
                             self.xmin_markov = np.array(x)
-        return x    
+        # Decision making for performing a local search
+        # based on Markov chain results
+        if not self.emin_unchanged:
+            e, x = self.ofw.local_search(self.xmin)
+            if e < self.mc.emini:
+                self.xmin = x
+                self.emin = e
+                self.index_no_emin_update = 0
+        if self.index_no_emin_update >= (
+            self.index_tol_emin_update - 1) and not self.pure_sa:
+            self.emin_markov, self.xmin_markov = self.ofw.local_search(
+                self.xmin_markov)
+            self.index_no_emin_update = 0
+            self.index_tol_emin_update = x.size
+            if self.emin_markov < self.emin:
+                self.emin = np.array(self.emin_markov)
+                self.xmin = np.array(self.xmin_markov)
+        return x
 
 class ObjFuncWrapper():
-        # In case the real value of the global minimum is known
-        # it can be used as stopping criterion
-        self.know_real = False
-        self.real_threshold = -np.inf
+
+        def __init__():
+            # In case the real value of the global minimum is known
+            # it can be used as stopping criterion
+            self.know_real = False
+            self.real_threshold = -np.inf
+            self.fun =
+
+        def gradient(self):
+            pass
+
+        def local_search(self, x):
+            pass
+
 
 
 class GenSARunner(object):
@@ -229,12 +260,6 @@ class GenSARunner(object):
                     break
                 # starting Markov chain
                 self._x = self.mc.run(self._x, i, temperature)
-                # Decision making for performing a local search
-                # based on Markov chain results
-                if not self.mc.emin_unchanged:
-                    e, x = self.local_search(self.mc.xmini)
-                    if e < self.mc.emini:
-                        self.
 
 
     def local_search(self):
