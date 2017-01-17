@@ -31,7 +31,7 @@ class VisitingDistribution(object):
         self.root_gauss = None
 
     def visiting(self, x, step, temperature):
-        x_visit = np.array(x)
+        x_visit = np.copy(x)
         dim = x_visit.size()
         if step < dim:
             visits = np.array([self.visit_fn() for _ in range(dim)])
@@ -122,11 +122,11 @@ class MarkovChain(object):
                 self.current_energy = e
                 if e < self.emin:
                     self.emin = e
-                    self.xmin = np.array(x_visit)
+                    self.xmin = np.copy(x_visit)
                     self.emin_unchanged = False
                     self.index_no_emin_update = 0
                     # Updating x with the new location
-                    x = np.array(x_visit)
+                    x = np.copy(x_visit)
             else:
                 # We have not improved but do we accept the new location?
                 r = self._rs.random_sample()
@@ -138,16 +138,16 @@ class MarkovChain(object):
                     pqa = np.exp(np.log(pqa1) / (1. - self.qa))
                 if r <= pqa:
                     # We accept the new location and assign the current x
-                    x = np.array(x_visit)
+                    x = np.copy(x_visit)
                     self.current_energy = e
                 if self.index_no_emin_update >= self.index_tol_emin_update:
                     if j == 0:
                         self.emin_markov = self.current_energy
-                        self.xmin_markov = np.array(x)
+                        self.xmin_markov = np.copy(x)
                     else:
                         if self.current_energy < self.emin_markov:
                             self.emini_markov = self.current_energy
-                            self.xmin_markov = np.array(x)
+                            self.xmin_markov = np.copy(x)
         # Decision making for performing a local search
         # based on Markov chain results
         if not self.emin_unchanged:
@@ -163,21 +163,57 @@ class MarkovChain(object):
             self.index_no_emin_update = 0
             self.index_tol_emin_update = x.size
             if self.emin_markov < self.emin:
-                self.emin = np.array(self.emin_markov)
-                self.xmin = np.array(self.xmin_markov)
+                self.emin = np.copy(self.emin_markov)
+                self.xmin = np.copy(self.xmin_markov)
         return x
 
-class ObjFuncWrapper():
+class LocalOptimizer():
 
-        def __init__():
-            # In case the real value of the global minimum is known
-            # it can be used as stopping criterion
-            self.know_real = False
-            self.real_threshold = -np.inf
-            self.fun =
+    def __init__(self, bounds, func, args=(), minimizer=None, **kwargs):
+        # In case the real value of the global minimum is known
+        # it can be used as stopping criterion
+        self.know_real = False
+        self.real_threshold = -np.inf
+        self.func = func
+        self.minimizer = minimizer
+        self.minimizer_args = kwargs
 
-        def gradient(self):
-            pass
+        if self.minimizer is None:
+            minimizer = optimize.minimize
+            self.minimizer_args = {
+                "method": "L-BFGS-B",
+                "jac": self.gradient
+                "bounds": bounds,
+            }
+        
+
+
+    def gradient(self, x, args=()):
+        g = np.zeros(sx.size, np.float64)
+        next_f1 = None
+        for i in range(x.size):
+            x1 = np.array(x)
+            x2 = np.array(x)
+            respl = self.reps
+            respr = self.reps
+            x1[i] = x[i] + respr
+            if x1[i] > self._upper[i]:
+                x1[i] = self._upper[i]
+                respr = x1[i] - x[i]
+            x2[i] = x[i] - respl
+            if x2[i] < self._lower[i]:
+                x2[i] = self._lower[i]
+                respl = x[i] - x2[i]
+            f1 = self.func(x1, args)
+            if next_f1 is None:
+                f2 = self.func(x2, args)
+                next_f1 = f2
+        g[i] = ((f1 - f2)) / (respl + respr)
+        idx = np.logical_or(np.isnan(g), np.isinf(g))
+        g[idx] = 101.0
+    return g
+
+
 
         def local_search(self, x):
             pass
@@ -205,7 +241,7 @@ class GenSARunner(object):
             x0 = self._lower + self._rs.random_sample(
                     len(bounds)) * (self._upper - self._lower)
         # Current location (parameter value)
-        self._x = np.array(x0)
+        self._x = np.copy(x0)
         # Initial energy value
         self._einit = None
         # Maximum number of function call that can be used a stopping criterion
