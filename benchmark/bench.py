@@ -45,12 +45,10 @@ else:
 DIMENSIONS = [5]
 DIMENSIONS.extend(range(10, 110, 10))
 
-
 N_DIM_FUNC_SELECTION = [
     'Ackley01', 'Exponential', 'Griewank', 'Rastrigin', 'Rosenbrock',
     'Schwefel01',
     ]
-
 
 class MyBounds(object):
     def __init__(self, xmax, xmin):
@@ -63,14 +61,13 @@ class MyBounds(object):
         tmin = bool(np.all(x >= self.xmin))
         return tmax and tmin
 
-
 class Benchmarker(object):
     def __init__(self, nbruns, folder):
         self.algorithms = [
             GenSAOptimizer(), BHOptimizer(), DEOptimizer(),
-            DERestartOptimizer(), PSOptimizer(), PSOLSOptimizer(),
-            PSORestartOptimizer(), PSOLSRestartOptimizer(),
-            BFOptimizer()
+#            DERestartOptimizer(), PSOptimizer(), PSOLSOptimizer(),
+#            PSORestartOptimizer(), PSOLSRestartOptimizer(),
+#            BFOptimizer()
         ]
         self.nbruns = nbruns
         self.folder = folder
@@ -94,8 +91,8 @@ class Benchmarker(object):
                             'Appending function: {0} with dim: {1}'.format(
                                 name, dim))
                         funcs.append((name, klass, dim))
-            else:
-                funcs.append((name, klass, None))
+            #  else:
+            funcs.append((name, klass, None))
             # Removing Benchmark class that is the mother class
             funcs = [x for x in funcs if x[0] != 'Benchmark']
         logger.info('Nb functions to process: {}'.format(len(funcs)))
@@ -193,14 +190,11 @@ class Benchmarker(object):
                     bu.update('ncall_max', i, algo.nbcall)
             bu.write(self.folder)
 
-
 class OptimumFoundException(Exception):
     pass
 
-
 class OptimumNotFoundException(Exception):
     pass
-
 
 class Algo(object):
     def __init__(self):
@@ -301,7 +295,6 @@ class Algo(object):
             raise OptimumFoundException('FOUND')
         return res
 
-
 class GenSAOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
@@ -314,7 +307,6 @@ class GenSAOptimizer(Algo):
                 bounds=zip(self._lower, self._upper), maxiter=MAX_IT,
                 pure_sa=False)
 
-
 class PSOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
@@ -324,7 +316,6 @@ class PSOptimizer(Algo):
         xopt, fopt = pso(
                 self._funcwrapped, self._lower, self._upper,
                 maxiter=MAX_IT)
-
 
 class PSORestartOptimizer(Algo):
     def __init__(self):
@@ -336,7 +327,6 @@ class PSORestartOptimizer(Algo):
             xopt, fopt = pso(
                     self._funcwrapped, self._lower, self._upper,
                     maxiter=MAX_IT)
-
 
 class PSOLSOptimizer(Algo):
     def __init__(self):
@@ -361,7 +351,6 @@ class PSOLSOptimizer(Algo):
         optimize.minimize(
             fun=self._funcwrapped, x0=self._x,
             bounds=zip(self._lower, self._upper))
-
 
 class PSOLSRestartOptimizer(Algo):
     def __init__(self):
@@ -393,7 +382,6 @@ class PSOLSRestartOptimizer(Algo):
             fun=self._funcwrapped, x0=self._xmini,
             bounds=zip(self._lower, self._upper))
 
-
 class BHOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
@@ -413,7 +401,6 @@ class BHOptimizer(Algo):
             niter=MAX_IT,
         )
 
-
 class DEOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
@@ -423,7 +410,6 @@ class DEOptimizer(Algo):
         optimize.differential_evolution(
             self._funcwrapped,
             [x for x in zip(self._lower, self._upper)], maxiter=MAX_IT)
-
 
 class DERestartOptimizer(Algo):
     def __init__(self):
@@ -437,7 +423,6 @@ class DERestartOptimizer(Algo):
                 [x for x in zip(self._lower, self._upper)],
                 maxiter=MAX_IT)
 
-
 class BFOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
@@ -447,7 +432,6 @@ class BFOptimizer(Algo):
         optimize.brute(
             self._funcwrapped,
             [x for x in zip(self._lower, self._upper)], )
-
 
 def main():
     root = logging.getLogger()

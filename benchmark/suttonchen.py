@@ -7,8 +7,10 @@
 # -*- coding: utf-8 > -*-
 import numpy as np
 import numpy.testing as npt
-from scipy.optimize import gensa
-
+try
+    from scipy.optimize import gensa
+except:
+    from pygensa import gensa
 __author__ = "Sylvain Gubian"
 __copyright__ = "Copyright 2016, PMP SA"
 __license__ = "GPL2.0"

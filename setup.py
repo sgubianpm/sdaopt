@@ -26,7 +26,7 @@ requires = [
 setup(
         name='pygensa',
         version='0.0.1',
-        description='General Simulated Annealing algorithm and extensive benchmark',
+        description='General Simulated Annealing algorithm and benchmark',
         long_description=README + '\n\n' +  CHANGES,
         classifiers=[
             "Programming Language :: Python",
