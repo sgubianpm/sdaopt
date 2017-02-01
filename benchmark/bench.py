@@ -38,10 +38,7 @@ else:
 if NB_CORES_AVAILABLES < 1:
     NB_CORES_AVAILABLES = 1
 
-if 'MULTI_DIM' in os.environ:
-    MULTI_DIM = True
-else:
-    MULTI_DIM = False
+MULTI_DIM = True
 DIMENSIONS = [5]
 DIMENSIONS.extend(range(10, 110, 10))
 

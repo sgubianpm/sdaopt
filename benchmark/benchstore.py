@@ -60,7 +60,7 @@ class BenchStore(object):
                             "{0}%".format(success_rate),
                             bu.best, bu.mean, bu.worst,
                             '{0} {1}'.format('(+/-)', bu.std), bu.lowest,
-                            round(et, 6), bu.medalli
+                            round(et, 6), bu.medall
                             ])
         elif kind == 'rst':
             table = []

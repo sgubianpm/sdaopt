@@ -22,13 +22,10 @@ NB_RUNS = 2
 OUTPUT_FOLDER = os.getcwd()
 # If cluser is going to be used uncomment this section and
 # launch the section number to be executed
-# import multiprocessing
-# os.environ['USE_CLUSTER'] = '1'
-# os.environ['SECTION_NUM'] = '0'
-# os.environ['NB_CORES'] = str(multiprocessing.cpu_count())
-
-# For big dimension problems benchmark, this has to be defined
-os.environ['MULTI_DIM'] = '1'
+# export env varaibles:
+# export USE_CLUSTER=1
+# export SECTION_NUM=0
+# export NB_CORES=16
 
 # Default settings will use the available cores on the local machine
 # For high dimension benchmarking, few functions have been selected from
