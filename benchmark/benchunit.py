@@ -108,7 +108,7 @@ class BenchUnit(object):
         v = self._values['ncall']
         if not v.size:
             return np.inf
-        return np.round(np.median(v), 6) * 1.1
+        return np.round(np.median(v), 6) 
 
     @property
     def std(self):

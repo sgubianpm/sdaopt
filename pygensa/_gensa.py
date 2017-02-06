@@ -148,11 +148,12 @@ class MarkovChain(object):
                         if self.current_energy < self.emin_markov:
                             self.emini_markov = self.current_energy
                             self.xmin_markov = np.copy(x)
+        # End of MarkovChain loop
         # Decision making for performing a local search
         # based on Markov chain results
         if not self.emin_unchanged:
             e, x = self.ofw.local_search(self.xmin)
-            if e < self.mc.emini:
+            if e < self..emini:
                 self.xmin = x
                 self.emin = e
                 self.index_no_emin_update = 0
@@ -167,7 +168,7 @@ class MarkovChain(object):
                 self.xmin = np.copy(self.xmin_markov)
         return x
 
-class LocalOptimizer():
+class ObjectiveFunctionWrapper():
 
     def __init__(self, bounds, func, args=(), minimizer=None, **kwargs):
         # In case the real value of the global minimum is known
@@ -175,6 +176,7 @@ class LocalOptimizer():
         self.know_real = False
         self.real_threshold = -np.inf
         self.func = func
+        self.func_args = args
         self.minimizer = minimizer
         self.minimizer_args = kwargs
 
@@ -185,10 +187,8 @@ class LocalOptimizer():
                 "jac": self.gradient
                 "bounds": bounds,
             }
-        
 
-
-    def gradient(self, x, args=()):
+    def gradient(self, x):
         g = np.zeros(sx.size, np.float64)
         next_f1 = None
         for i in range(x.size):
@@ -204,19 +204,20 @@ class LocalOptimizer():
             if x2[i] < self._lower[i]:
                 x2[i] = self._lower[i]
                 respl = x[i] - x2[i]
-            f1 = self.func(x1, args)
+            f1 = self.func(x1, self.func_args)
             if next_f1 is None:
-                f2 = self.func(x2, args)
+                f2 = self.func(x2, self.func_args)
                 next_f1 = f2
         g[i] = ((f1 - f2)) / (respl + respr)
         idx = np.logical_or(np.isnan(g), np.isinf(g))
         g[idx] = 101.0
     return g
 
-
-
-        def local_search(self, x):
-            pass
+    def local_search(self, x):
+        mres = self.minimizer(self.func, x, **self.minimizer.args)
+        if not mres.success:
+            return None
+        return (mres.fun, mres.x)
 
 
 

@@ -62,9 +62,8 @@ class Benchmarker(object):
     def __init__(self, nbruns, folder):
         self.algorithms = [
             GenSAOptimizer(), BHOptimizer(), DEOptimizer(),
-#            DERestartOptimizer(), PSOptimizer(), PSOLSOptimizer(),
-#            PSORestartOptimizer(), PSOLSRestartOptimizer(),
-#            BFOptimizer()
+            DERestartOptimizer(), PSOptimizer(), PSORestartOptimizer(),
+            BFOptimizer()
         ]
         self.nbruns = nbruns
         self.folder = folder
@@ -270,7 +269,7 @@ class Algo(object):
         func = self._k.fun
         res = func(x)
         self._nbcall += 1
-        if self._nbcall > self._maxcall:
+        if self._nbcall >= self._maxcall:
             if self._favor_context:
                 self._maxcall += LS_MAX_CALL
             raise OptimumNotFoundException('NB MAX CALL reached...')
