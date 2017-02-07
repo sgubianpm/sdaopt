@@ -239,7 +239,7 @@ class GenSARunner(object):
                     self._emin_markov = np.array(self._etot0)
                     self._xmin_markov = np.array(self._x)
                 else:
-                    if self._etot0 < self._emini_markov:
+                    if self._etot0 < self._emin_markov:
                         self._emin_markov = np.array(self._etot0)
                         self._xmin_markov = np.array(self._x)
 
