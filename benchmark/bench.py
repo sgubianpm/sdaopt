@@ -9,10 +9,21 @@ import sys
 import os
 import time
 import logging
+import copy
 import multiprocessing
 import inspect
+import contextlib
 import numpy as np
-from scipy import optimize
+from scipy.optimize import basinhopping
+from scipy.optimize import differential_evolution
+from scipy.optimize import brute 
+from scipy.optimize import minimize
+try:
+# If gensa is available in SciPy
+    from scipy.optimize import gensa
+# Otherwise use the local gensa implementation
+except:
+    from pygensa.gensa import gensa
 from pyswarm import pso
 import go_benchmark_functions as gbf
 from .job import Job
@@ -43,9 +54,25 @@ DIMENSIONS = [5]
 DIMENSIONS.extend(range(10, 110, 10))
 
 N_DIM_FUNC_SELECTION = [
-    'Ackley01', 'Exponential', 'Griewank', 'Rastrigin', 'Rosenbrock',
+    'Ackley01', 'Exponential', 'Rastrigin', 'Rosenbrock',
     'Schwefel01',
     ]
+
+
+class DummyFile(object):
+    def write(self, x): pass
+    def flush(self): pass
+
+
+@contextlib.contextmanager
+def nostdout():
+    save_stdout = sys.stdout
+    save_stderr = sys.stderr
+    sys.stdout = DummyFile()
+    sys.stderr = DummyFile()
+    yield
+    sys.stdout = save_stdout
+    sys.stderr = save_stderr
 
 class MyBounds(object):
     def __init__(self, xmax, xmin):
@@ -109,11 +136,15 @@ class Benchmarker(object):
             index += 1
         while jobs:
             running = []
+            to_delete = [] 
             for index, job in jobs.items():
                 if job.status == 'FINISHED':
-                    del jobs[index]
-                if job.status == 'RUNNING':
+                    to_delete.append(index)
+                elif job.status == 'RUNNING':
                     running.append(index)
+            if to_delete:
+                for i in to_delete:
+                    del jobs[i]
             freecores = NB_CORES_AVAILABLES - len(running)
             if freecores <= NB_CORES_AVAILABLES:
                 non_running = [jobs[
@@ -148,10 +179,10 @@ class Benchmarker(object):
                     continue
                 try:
                     algo.optimize()
-                    logger.info(
-                            ':-(  Func: {0} - Algo: {1} - RUN: {2} ',
-                            '-> FAILED after {3} calls'.format(
-                                self._fname, algo.name, i, algo.nbcall))
+                    s = (':-(  Func: {0} - Algo: {1} - RUN: {2} '
+                         '-> FAILED after {3} calls').format(
+                             self._fname, algo.name, i, algo.nbcall)
+                    logger.info(s)
                     bu.update('success', i, algo.success)
                     bu.update('ncall', i, algo.fcall_success)
                     bu.update('fvalue', i, algo.fsuccess)
@@ -159,25 +190,25 @@ class Benchmarker(object):
                     bu.update('ncall_max', i, algo.nbcall)
                 except Exception as e:
                     if type(e) == OptimumFoundException:
-                        logger.info(
-                            ':-)  Func: {0} - Algo: {1} - RUN: {2} ',
-                            '-> FOUND after {3} calls'.format(
-                                self._fname, algo.name, i, algo.nbcall))
+                        s = (':-)  Func: {0} - Algo: {1} - RUN: {2} '
+                             '-> FOUND after {3} calls').format(
+                                self._fname, algo.name, i, algo.nbcall)
+                        logger.info(s)
                         algo._success = True
                     elif type(e) == OptimumNotFoundException:
                         if algo._favor_context:
                             logger.info('Maximum NB CALL reached. LS...')
                             algo.lsearch()
                             self._favor_context = False
-                        logger.info(
-                            ':-(  Func: {0} - Algo: {1} - RUN: {2} ',
-                            '-> FAILED after {3} calls'.format(
-                                self._fname, algo.name, i, algo.nbcall))
+                        s = (':-(  Func: {0} - Algo: {1} - RUN: {2} '
+                             '-> FAILED after {3} calls').format(
+                                self._fname, algo.name, i, algo.nbcall)
+                        logger.info(s)
                     else:
-                        logger.info(
-                            ':-(  Func: {0} - Algo: {1} - RUN: {2} ',
-                            '-> EXCEPTION RAISED after {3} calls: {4}'.format(
-                                self._fname, algo.name, i, algo.nbcall, e))
+                        s = (':-(  Func: {0} - Algo: {1} - RUN: {2} '
+                             '-> EXCEPTION RAISED after {3} calls: {4}').format(
+                                self._fname, algo.name, i, algo.nbcall)
+                        logger.info(s)
                         algo._success = False
                     bu.update('success', i, algo.success)
                     bu.update('ncall', i, algo.fcall_success)
@@ -298,10 +329,10 @@ class GenSAOptimizer(Algo):
 
     def optimize(self):
         Algo.optimize(self)
-        optimize.gensa(
-                func=self._funcwrapped, x0=None,
-                bounds=zip(self._lower, self._upper), maxiter=MAX_IT,
-                pure_sa=False)
+        gensa(
+            func=self._funcwrapped, x0=None,
+            bounds=list(zip(self._lower, self._upper)), maxiter=MAX_IT,
+            pure_sa=False)
 
 class PSOptimizer(Algo):
     def __init__(self):
@@ -309,7 +340,8 @@ class PSOptimizer(Algo):
         self.name = 'PSO'
 
     def optimize(self):
-        xopt, fopt = pso(
+        with nostdout():
+            xopt, fopt = pso(
                 self._funcwrapped, self._lower, self._upper,
                 maxiter=MAX_IT)
 
@@ -320,7 +352,8 @@ class PSORestartOptimizer(Algo):
 
     def optimize(self):
         while (self._nbcall < MAX_FN_CALL):
-            xopt, fopt = pso(
+            with nostdout():
+                xopt, fopt = pso(
                     self._funcwrapped, self._lower, self._upper,
                     maxiter=MAX_IT)
 
@@ -331,9 +364,10 @@ class PSOLSOptimizer(Algo):
 
     def optimize(self):
         self._favor_context = True
-        self._x, _ = pso(
-            self._funcwrapped, self._lower, self._upper,
-            maxiter=MAX_IT, )
+        with nostdout():
+            self._x, _ = pso(
+                self._funcwrapped, self._lower, self._upper,
+                maxiter=MAX_IT, )
         self._favor_context = False
         self.lsearch()
 
@@ -344,7 +378,7 @@ class PSOLSOptimizer(Algo):
             logger.error('LS not possible, no returned value - FAILED')
             self._favor_context = False
             raise OptimumNotFoundException("NOT FOUND - NO LS")
-        optimize.minimize(
+        minimize(
             fun=self._funcwrapped, x0=self._x,
             bounds=zip(self._lower, self._upper))
 
@@ -356,9 +390,10 @@ class PSOLSRestartOptimizer(Algo):
     def optimize(self):
         self._favor_context = True
         while (self._nbcall < MAX_FN_CALL):
-            x, v = pso(
-                self._funcwrapped, self._lower, self._upper,
-                maxiter=MAX_IT, )
+            with nostdout():
+                x, v = pso(
+                    self._funcwrapped, self._lower, self._upper,
+                    maxiter=MAX_IT, )
             if self._xmini is None:
                 self._xmini = x
             if self._fmini is None:
@@ -374,7 +409,7 @@ class PSOLSRestartOptimizer(Algo):
             logger.error('LS not possible, no returned value - FAILED')
             self._favor_context = False
             raise OptimumNotFoundException("NOT FOUND - NO LS")
-        optimize.minimize(
+        minimize(
             fun=self._funcwrapped, x0=self._xmini,
             bounds=zip(self._lower, self._upper))
 
@@ -385,7 +420,7 @@ class BHOptimizer(Algo):
 
     def optimize(self):
         mybounds = MyBounds(self._lower, self._upper)
-        optimize.basinhopping(
+        basinhopping(
             self._funcwrapped, self._xinit,
             minimizer_kwargs={
                 'method': 'L-BFGS-B',
@@ -403,7 +438,7 @@ class DEOptimizer(Algo):
         self.name = 'DE'
 
     def optimize(self):
-        optimize.differential_evolution(
+        differential_evolution(
             self._funcwrapped,
             [x for x in zip(self._lower, self._upper)], maxiter=MAX_IT)
 
@@ -414,7 +449,7 @@ class DERestartOptimizer(Algo):
 
     def optimize(self):
         while(self._nbcall < MAX_FN_CALL):
-            optimize.differential_evolution(
+            differential_evolution(
                 self._funcwrapped,
                 [x for x in zip(self._lower, self._upper)],
                 maxiter=MAX_IT)
@@ -425,27 +460,7 @@ class BFOptimizer(Algo):
         self.name = 'BF'
 
     def optimize(self):
-        optimize.brute(
+        brute(
             self._funcwrapped,
             [x for x in zip(self._lower, self._upper)], )
 
-def main():
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
-
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    root.addHandler(ch)
-    nbruns = 100
-    if MULTI_DIM:
-        dest = 'GENSA_bench_n_dim'
-    else:
-        dest = 'GENSA_bench_'
-    bm = Benchmarker(nbruns=nbruns, folder='{0}_{1}'.format(
-       dest, nbruns))
-    bm.run()
-
-if __name__ == '__main__':
-    main()
