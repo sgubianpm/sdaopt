@@ -34,7 +34,7 @@ class BenchStore(object):
         files = [x for x in files if x.endswith('.data')]
         files = sorted(files)
         if kind == 'csv':
-            with open(path, 'wb') as csvfile:
+            with open(path, 'w') as csvfile:
                 csvwriter = csv.writer(
                         csvfile, delimiter=',',
                         quotechar='|', quoting=csv.QUOTE_MINIMAL
