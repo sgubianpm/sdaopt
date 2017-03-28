@@ -2,6 +2,7 @@
 #   * Section *  # Build figure 1 and table S1 of performance.
 #=======================================================================
 args <- (commandArgs(TRUE))
+print(args)
 
 if (length(args) == 0) {
     message("No arguments provided")
