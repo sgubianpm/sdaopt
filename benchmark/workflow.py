@@ -58,8 +58,8 @@ def main(args):
     # Generate table and figure with Yang R script
     cmd = 'R'
     p = subprocess.Popen(
-        ['R', '--no-save', '--no-restore', '--args',
-         output_folder, '<', 'PyGenSA.R']
+        ['R', '--no-save', '--no-restore', '--args', 
+         output_folder, '<', 'PyGenSA.R'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=False)
