@@ -2,8 +2,8 @@
 #   * Section *  # Build figure 1 and table S1 of performance.
 #=======================================================================
 args <- commandArgs(trailingOnly = FALSE)
-results.path <- file.path(args[1], 'results.csv')
-output.path <- file.path(args[1], 'output')
+results.path <- file.path(args[5], 'results.csv')
+output.path <- file.path(args[5], 'output')
 
 # Load packages. 
 for (i in c("reshape2", "gplots", "xtable", "RColorBrewer")) {
@@ -23,7 +23,7 @@ if (!dir.exists(output.path)) {
 if(!file.exists(file.path(results.path))) {
     stop('results.csv file not found')
 } else {
-    per <- read.table("results.csv", header = TRUE, sep = ",", na.string = "nan",
+    per <- read.table(results.path, header = TRUE, sep = ",", na.string = "nan",
         check.names = FALSE, as.is = TRUE)
 }
 
@@ -79,7 +79,7 @@ print(paste(names(tmp), paste(tmp, sep = ""), sep = ": ", collapse = "; "))
 #[1] "BF: Inf; BH: 867.5; DE: 1197.2; DE-R: 1663.2; PSO: 3718.5; PSO-R: 13355.2; PyGenSA: 1076.3"
 
 # Output Figure 1.
-message(paste0('Generating heatmap figure Figure_1_successRate.pdf to folder: ', output.path)
+message(paste0('Generating heatmap figure Figure_1_successRate.pdf to folder: ', output.path))
 suc.rate <- as.matrix(suc.rate.tab[, -1])
 rownames(suc.rate) <- suc.rate.tab[, "Testing Function"]
 pdf(file=file.path(output.path, "Figure_1_successRate.pdf"), h=8, w=7)
@@ -88,6 +88,6 @@ heatmap.2(suc.rate, col = colorRampPalette(brewer.pal(6, "Spectral")), Colv=FALS
 dev.off()
 
 # output Table_S1.txt
-message(paste0('Generating table Table_S1.txt to folder: ', output.path)
+message(paste0('Generating table Table_S1.txt to folder: ', output.path))
 write.table(suc.ANFC, sep = "\t", file = file.path(output.path, "Table_S1.txt"), col.names = TRUE, row.names = FALSE, quote = FALSE)
 
