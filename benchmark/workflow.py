@@ -55,6 +55,22 @@ def main(args):
     BenchStore.report(
         kind='csv', path=path, folder=output_folder)
 
+    # Generate table and figure with Yang R script
+    cmd = 'R'
+    p = subprocess.Popen(
+        ['R', '--no-save', '--no-restore', '--args',
+         output_folder, '<', 'PyGenSA.R']
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=False)
+    (out, err) = p.communicate()
+    res = p.wait()
+    if res !=0:
+        print('Failed to run R script: {0}'.format(err))
+    else:
+        print('R script run successfuly')
+
+
 
 # Call the main function with the first argument number of runs and second
 # argument the folder path to results
