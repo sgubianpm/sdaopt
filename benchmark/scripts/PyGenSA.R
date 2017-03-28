@@ -1,9 +1,18 @@
 #=======================================================================
 #   * Section *  # Build figure 1 and table S1 of performance.
 #=======================================================================
-args <- commandArgs(trailingOnly = FALSE)
-results.path <- file.path(args[5], 'results.csv')
-output.path <- file.path(args[5], 'output')
+args <- (commandArgs(TRUE))
+
+if (length(args) == 0) {
+    message("No arguments provided")
+    base.path <- getwd()
+} else {
+    for(i in 1:length(args)){
+      eval(parse(text=args[[i]]))
+    }
+}
+results.path <- file.path(base.path, 'results.csv')
+output.path <- file.path(base.path, 'output')
 
 # Load packages. 
 for (i in c("reshape2", "gplots", "xtable", "RColorBrewer")) {

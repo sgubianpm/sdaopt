@@ -10,6 +10,7 @@ import sys
 import logging
 from benchmark.bench import Benchmarker
 from benchmark.benchstore import BenchStore
+import subprocess
 
 __author__ = "Sylvain Gubian"
 __copyright__ = "Copyright 2016, PMP SA"
@@ -40,7 +41,7 @@ def main(args):
         output_folder = DEFAULT_OUTPUT_FOLDER
 
     root = logging.getLogger()
-    root.setLevel(logging.WARNING)
+    root.setLevel(logging.INFO)
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -52,17 +53,27 @@ def main(args):
     bm.run()
     # Generating the csv report file from the benchmark 
     path = os.path.join(output_folder, 'results.csv')
+    logger.info('Reading all result data...')
     BenchStore.report(
         kind='csv', path=path, folder=output_folder)
 
     # Generate table and figure with Yang R script
-    cmd = 'R'
-    p = subprocess.Popen(
-        ['R', '--no-save', '--no-restore', '--args', 
-         output_folder, '<', 'PyGenSA.R'],
+    logger.info('Generating figure and table...')
+    r_script_path = os.path.join(
+        os.path.dirname(__file__),
+        'scripts',
+        'PyGenSA.R')
+    cmd = [
+        'R', 'CMD', 'BATCH', '--no-save', '--no-restore',
+        "'--args base.path=\"{0}\"'".format(
+            output_folder), r_script_path, 'PyGenSA.Rout'
+    ]
+    logger.info('Command is: {0}'.format(' '.join(cmd)))
+    p = subprocess.Popen(cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=False)
+    logger.info(p)
     (out, err) = p.communicate()
     res = p.wait()
     if res !=0:
