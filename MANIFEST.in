@@ -1,0 +1,4 @@
+include README.rst
+include CHANGES.txt
+include pygensa/benchmark/scripts/PyGenSA.R
+include pygensa/benchmark/scripts/bench.R
