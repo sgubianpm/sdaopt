@@ -11,8 +11,8 @@ import os
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
-#README = open(os.path.join(here, 'README.md')).read()
-#CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
+README = open(os.path.join(here, 'README.rst')).read()
+CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
     'numpy',
@@ -25,8 +25,9 @@ requires = [
 
 setup(
         name='pygensa',
-        version='0.0.1',
+        version='0.0.2',
         description='General Simulated Annealing algorithm and benchmark',
+        long_description=README + '\n\n' +  CHANGES,
         classifiers=[
             "Programming Language :: Python",
             "Intended Audience :: Science/Research",
@@ -40,9 +41,9 @@ setup(
         keywords='optimization benchmarking simulated annealing',
         packages=find_packages(),
         include_package_data=True,
-        package_data={
-            'gensabenchmarks': ['scripts/bench.R'],
-            },
+        entry_points = {
+            'console_scripts': ['gensa_bench=pygensa.benchmark.workflow:main'],
+        },
         zip_safe=False,
         install_requires=requires,
         tests_require=requires,

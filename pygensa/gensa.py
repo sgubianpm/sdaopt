@@ -71,11 +71,11 @@ class GenSARunner(object):
         self.fun = fun
         self.args = args
         self.pure_sa = pure_sa
-        if x0 is not None and not len(x0) == len(bounds):
-            raise ValueError('Bounds size does not match x0')
         lu = list(zip(*bounds))
         self._lower = np.array(lu[0])
         self._upper = np.array(lu[1])
+        if x0 is not None and not len(x0) == len(self._lower):
+            raise ValueError('Bounds size does not match x0')
         # Checking that bounds are consistent
         if not np.all(self._lower < self._upper):
             raise ValueError('Bounds are note consistent min < max')
@@ -83,7 +83,7 @@ class GenSARunner(object):
         self._random_state = check_random_state(seed)
         if x0 is None:
             x0 = self._lower + self._random_state.random_sample(
-                    len(bounds)) * (self._upper - self._lower)
+                    len(self._lower)) * (self._upper - self._lower)
         self.seed = seed
         # Number of maximum sof iteration for local search
         self.itsoftmax = x0.size * 6
