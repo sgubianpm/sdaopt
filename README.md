@@ -19,8 +19,6 @@ cd pygensa
 python setup.py install
 ```
 
-## Installation from zip
-
 ## Running benchmark on a multicore machine
 
 ```bash
