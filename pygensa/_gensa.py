@@ -153,7 +153,7 @@ class MarkovChain(object):
         # based on Markov chain results
         if not self.emin_unchanged:
             e, x = self.ofw.local_search(self.xmin)
-            if e < self..emini:
+            if e < self.emini:
                 self.xmin = x
                 self.emin = e
                 self.index_no_emin_update = 0
@@ -184,7 +184,7 @@ class ObjectiveFunctionWrapper():
             minimizer = optimize.minimize
             self.minimizer_args = {
                 "method": "L-BFGS-B",
-                "jac": self.gradient
+                "jac": self.gradient,
                 "bounds": bounds,
             }
 
@@ -211,7 +211,7 @@ class ObjectiveFunctionWrapper():
         g[i] = ((f1 - f2)) / (respl + respr)
         idx = np.logical_or(np.isnan(g), np.isinf(g))
         g[idx] = 101.0
-    return g
+        return g
 
     def local_search(self, x):
         mres = self.minimizer(self.func, x, **self.minimizer.args)
