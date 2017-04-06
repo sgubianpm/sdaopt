@@ -7,7 +7,7 @@
 # -*- coding: utf-8 > -*-
 import numpy as np
 import numpy.testing as npt
-try
+try:
     from scipy.optimize import gensa
 except:
     from pygensa import gensa
@@ -24,8 +24,8 @@ K = 9
 
 
 def sutton_chen(x):
-    x = x.reshape((x.size/3, 3))
-    idx = np.array(np.arange(0, x.shape[0]) * x.shape[0])
+    x = x.reshape((int(x.size/3), 3))
+    idx = np.array(list(np.arange(0, x.shape[0])) * x.shape[0])
     jdx = np.concatenate([[a] * x.shape[0] for a in range(
         0, x.shape[0])])
     index = np.column_stack((idx, jdx))
@@ -58,7 +58,7 @@ def main():
     n_particles = 6
     lw = [-0.7] * (3 * n_particles)
     up = [0.7] * (3 * n_particles)
-    np.random.seed(1)
+    np.random.seed(123)
     ret = gensa(sutton_chen, None, bounds=(zip(lw, up)))
     # np.set_printoptions(precision=4)
     print('xmin =\n{}'.format(np.array2string(ret.x, max_line_width=40)))

@@ -1,26 +1,15 @@
 #=======================================================================
 #   * Section *  # Build figure 1 and table S1 of performance.
 #=======================================================================
-args <- (commandArgs(TRUE))
-print(args)
-
-if (length(args) == 0) {
-    message("No arguments provided")
-    base.path <- getwd()
-} else {
-    for(i in 1:length(args)){
-      eval(parse(text=args[[i]]))
-    }
-}
-results.path <- file.path(base.path, 'results.csv')
-output.path <- file.path(base.path, 'output')
+results.path <- file.path(getwd(), 'DATA', 'results.csv')
+output.path <- file.path(getwd(), 'OUTPUT')
 
 # Load packages. 
 for (i in c("reshape2", "gplots", "xtable", "RColorBrewer")) {
     tmp <- require(i, character.only = TRUE)
     if(!tmp) {
         warning("Now installing R package ", i, ".\n")
-        install.packages(pkgs = i)
+        install.packages(pkgs = i, contriburl='http://cran.r-project.org/src/contrib/')
         require(i, character.only = TRUE)
     }
 }

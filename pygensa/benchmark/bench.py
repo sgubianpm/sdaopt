@@ -25,7 +25,7 @@ try:
 except:
     from pygensa.gensa import gensa
 from pyswarm import pso
-import go_benchmark_functions as gbf
+import pygensa.benchmark.go_benchmark_functions as gbf
 from .job import Job
 from .benchunit import BenchUnit
 
