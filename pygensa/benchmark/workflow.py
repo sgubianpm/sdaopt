@@ -65,8 +65,8 @@ def run_all_bench():
     logger.warning(('The benchmark may take very long time depending on the'
                     ' number of cores available on your machine...'))
     
-    #bm = Benchmarker(nb_runs, output_folder)
-    #bm.run()
+    bm = Benchmarker(nb_runs, output_folder)
+    bm.run()
     # Generating the csv report file from the benchmark 
     path = os.path.join(output_folder, 'results.csv')
     logger.info('Reading all results data...')
