@@ -90,7 +90,7 @@ class Benchmarker(object):
         self.algorithms = [
             GenSAOptimizer(), BHOptimizer(), DEOptimizer(),
             DERestartOptimizer(), PSOptimizer(), PSORestartOptimizer(),
-            BFOptimizer()
+            BFOptimizer(), BHRestartOptimizer(),
         ]
         self.nbruns = nbruns
         self.folder = folder
@@ -431,6 +431,27 @@ class BHOptimizer(Algo):
             accept_test=mybounds,
             niter=MAX_IT,
         )
+        
+class BHRestartOptimizer(Algo):
+    def __init__(self):
+        Algo.__init__(self)
+        self.name = 'BH-R'
+
+    def optimize(self):
+        mybounds = MyBounds(self._lower, self._upper)
+        while(self._nbcall < MAX_FN_CALL):
+            basinhopping(
+                self._funcwrapped, self._xinit,
+                minimizer_kwargs={
+                    'method': 'L-BFGS-B',
+                    'bounds': [
+                        x for x in zip(self._lower, self._upper)
+                    ]
+                },
+                accept_test=mybounds,
+                niter=MAX_IT,
+            )
+            
 
 class DEOptimizer(Algo):
     def __init__(self):
