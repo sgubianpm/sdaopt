@@ -14,7 +14,7 @@ for (i in c("reshape2", "gplots", "xtable", "RColorBrewer")) {
     }
 }
 # Generate folder for generated outputs
-if (!dir.exists(output.path)) {
+if (!file.exists(output.path)) {
     dir.create(output.path)
 }
 
