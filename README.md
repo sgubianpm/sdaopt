@@ -7,7 +7,7 @@ https://github.com/scipy/scipy/pull/6569
 Results of the benchmarks are available at:
 https://gist.github.com/sgubianpm/7d55f8d3ba5c9de4e9f0f1ffff1aa6cf
 
-Minimum requirements to run the benchmarks is to have scipy and matplotlib installed. Other dependencies are managed in the setup.py file. 
+Minimum requirements to run the benchmarks is to have scipy installed. Other dependencies are managed in the setup.py file. 
 Running the benchmark is very CPU intensive and require a multicore machine or a cluster infrastructure.
 
 ## Installation from source
@@ -23,12 +23,10 @@ python setup.py install
 
 ```bash
 # Activate your appropriate python virtual environment if needed
-# Replace NB_RUNS and OUTPUT_FODER by your values.
+# Replace NB_RUNS by your values (default value is 100)
 # NB_RUNS is the number of runs done for each testing function and algorithm used
-# OUTPUT_FOLDER is the folder where result files will be generated
-# If none of NB_RUNS and OUTPUT_FOLDER are provided, 100 runs and current working directory/DATA is used.
 # The script uses all available cores on the machine.
-gensa_bench --nb-runs NB_RUNS --output-folder OUTPUT_FOLDER
+gensa_bench --nb-runs NB_RUNS
 ```
 
 ## Running benchmark on a cluster (Example for Moab/TORQUE)
