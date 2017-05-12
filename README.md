@@ -8,6 +8,10 @@ https://gist.github.com/sgubianpm/7d55f8d3ba5c9de4e9f0f1ffff1aa6cf
 Minimum requirements to run the benchmarks is to have scipy installed. Other dependencies are managed in the setup.py file. 
 Running the benchmark is very CPU intensive and require a multicore machine or a cluster infrastructure.
 
+This algorithm is planned to be integrated to SciPy kit. It is under review by SciPy subject matter experts.
+https://github.com/scipy/scipy/pull/6569
+
+
 ## Installation from source
 
 ```bash
@@ -15,6 +19,21 @@ git clone https://github.com/sgubianpm/pygensa.git
 cd pygensa
 # Activate your appropriate python virtual environment if needed
 python setup.py install
+```
+
+## How to use it
+```python
+import numpy as np
+from pygensa import gensa
+# Defining Rastring function as a test function
+func = lambda x: np.sum(x * x - 10 * np.cos(2 * np.pi * x)) + 10 * np.size(x)
+# Setting bounds
+lw = [-5.12] * 10
+up = [5.12] * 10
+# Running the optimization computation
+ret = gensa(func, None, bounds=(zip(lw, up)))
+# Showing results
+print("global minimum: xmin = {0}, f(xmin) = {1}".format(ret.x, ret.fun))
 ```
 
 ## Running benchmark on a multicore machine
