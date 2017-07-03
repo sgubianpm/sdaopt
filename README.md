@@ -1,4 +1,4 @@
-# PyHGSA (further refactored and improved from previous PyGenSA implementation)
+# PyHGSA
 
 Hybrid Generalized simmulated annealing global optimization algorithm implementation and extensive benchmark. Testing functions used in the benchmark have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project.
 
