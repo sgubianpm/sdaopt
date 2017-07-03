@@ -24,9 +24,9 @@ requires = [
     ]
 
 setup(
-        name='pygensa',
+        name='pyhgsa',
         version='0.0.2',
-        description='General Simulated Annealing algorithm and benchmark',
+        description='Hybrid General Simulated Annealing algorithm and benchmark',
         long_description=README + '\n\n' +  CHANGES,
         classifiers=[
             "Programming Language :: Python",
@@ -37,13 +37,13 @@ setup(
           ],
         author='Sylvain Gubian, PMP SA',
         author_email='sylvain.gubian@pmi.com',
-        url='https://github.com/sgubianpm/pygensa',
+        url='https://github.com/sgubianpm/pyhgsa',
         keywords='optimization benchmarking simulated annealing',
         packages=find_packages(),
         include_package_data=True,
         entry_points = {
             'console_scripts':
-            ['gensa_bench=pygensa.benchmark.workflow:run_all_bench'],
+            ['hgsa_bench=pyhgsa.benchmark.workflow:run_all_bench'],
         },
         zip_safe=False,
         install_requires=requires,
