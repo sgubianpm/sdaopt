@@ -3,7 +3,7 @@
 # Yang Xiang <yang.xiang@pmi.com>
 # Author: Sylvain Gubian, PMP S.A.
 """
-hygsa: A generalized simulated annealing global optimization algorithm
+hygsa: An Hybrid Generalized Simulated Annealing global optimization algorithm
 """
 from __future__ import division, print_function, absolute_import
 
@@ -14,6 +14,7 @@ from scipy.special import gammaln
 from scipy._lib._util import check_random_state
 
 __all__ = ['hygsa']
+BIG_VALUE = 1e16
 
 
 class VisitingDistribution(object):
@@ -34,7 +35,8 @@ class VisitingDistribution(object):
         x_visit = np.copy(x)
         dim = x_visit.size()
         if step < dim:
-            visits = np.array([self.visit_fn() for _ in range(dim)])
+            # Changing all coordinates with a new visting value
+            visits = np.array([self.visit_fn(temperature) for _ in range(dim)])
             bigs = np.where(visits > self.tail_limit)[0]
             smalls = np.where(visits < -self.tail_limit)[0]
             visits[bigs] = self.tail_limit * self.rs.random_sample(len(bigs))
@@ -47,7 +49,8 @@ class VisitingDistribution(object):
             x_visit[np.fabs(
                 x_visit - self.lower) < self.min_visit_bound] += 1.e-10
         else:
-            visit = self.visit_fn()
+            # Changing only one coordinate at a time based on Markov chain step 
+            visit = self.visit_fn(temperature)
             if visit > self.tail_limit:
                 visit = self.tail_limit * self.rs.random_sample()
             elif visit < -self.tail_limit:
@@ -168,7 +171,7 @@ class MarkovChain(object):
                 self.xmin = np.copy(self.xmin_markov)
         return x
 
-class ObjectiveFunctionWrapper():
+class ObjectiveFunWrapper():
 
     def __init__(self, bounds, func, args=(), minimizer=None, **kwargs):
         # In case the real value of the global minimum is known
@@ -180,6 +183,8 @@ class ObjectiveFunctionWrapper():
         self.minimizer = minimizer
         self.minimizer_args = kwargs
 
+        # By default, L-BGS-B is used with a custom 3 points gradient
+        # computation
         if self.minimizer is None:
             minimizer = optimize.minimize
             self.minimizer_args = {
@@ -216,55 +221,55 @@ class ObjectiveFunctionWrapper():
     def local_search(self, x):
         mres = self.minimizer(self.func, x, **self.minimizer.args)
         if not mres.success:
-            return None
+            return BIG_VALUE, None
         return (mres.fun, mres.x)
 
 
 
 class HyGSARunner(object):
+    MAX_REINIT_COUNT = 1000
 
     def __init__(self, fun, x0, bounds, args=(), seed=None,
                  temperature_start=5230, qv=2.62, qa=-5.0, maxfun=1e7,
                  maxsteps=500):
-        self.owf = ObjFuncWrapper(fun, args)
+        self.owf = ObjectiveFunWrapper(fun, args)
         if x0 is not None and not len(x0) == len(bounds):
             raise ValueError('Bounds size does not match x0')
         lu = list(zip(*bounds))
         self._lower = np.array(lu[0])
         self._upper = np.array(lu[1])
+        if x0 is not None:
+            self._x = np.copy(x0)
+        else:
+            self._x = None
         # Checking that bounds are consistent
         if not np.all(self._lower < self._upper):
             raise ValueError('Bounds are note consistent min < max')
         # Initialization of RandomState for reproducible runs if seed provided
         self._rs = check_random_state(seed)
-        # If no initial coordinates provided, generated random ones
-        if x0 is None:
-            x0 = self._lower + self._rs.random_sample(
-                    len(bounds)) * (self._upper - self._lower)
-        # Current location (parameter value)
-        self._x = np.copy(x0)
-        # Initial energy value
-        self._einit = None
         # Maximum number of function call that can be used a stopping criterion
         self.maxfuncall = maxfun
-        # Maximum number of step (main iteration)  that ca be used as
+        # Maximum number of step (main iteration)  that can be used as
         # stopping criterion
         self.maxsteps = maxsteps
         # Minimum value of annealing temperature reached to perform
         # re-annealing
         self._temperature_start = temperature_start
         self.temperature_restart = 0.1
-        # Markov chain instance
+        # VisitingDistribution instance 
         vd = VisitingDistribution(self._lower, self._upper, qv, seed)
+        # Markov chain instance
         self.mc = MarkovChain(qa, vd, self.owf)
 
-    def initialize(self, x0):
+    def clean(self):
+        if self._x is None:
+            self._x = self._lower + self._rs.random_sample(
+                len(bounds)) * (self._upper - self._lower)
         init_error = True
         reinit_counter = 0
-        self.owl.nb_fn_call = 0
         while init_error:
             self._einit = self.owf.fun(self._x)
-            if self._einit >= self.BIG_VALUE:
+            if self._einit >= BIG_VALUE:
                 if reinit_counter >= self.MAX_REINIT_COUNT:
                     init_error = False
                     self._message = [(
@@ -280,33 +285,26 @@ class HyGSARunner(object):
                 init_error = False
 
     def search(self):
-        max_steps_not_exceeded = True
-        while(max_steps_not_exceeded):
+        self.owl.nb_fn_call = 0
+        max_steps_reached = False
+        self._iter = 0
+        while(!max_steps_reached):
+            self.clean()
             for i in range(self.maxsteps):
                 # Compute temperature for this step
                 s = float(i) + 2.0
                 t1 = np.exp((self.qv - 1) * np.log(2.0)) - 1.0
                 t2 = np.exp((self.qv - 1) * np.log(s)) - 1.0
                 temperature = self.temperature_start * t1 / t2
-                self._step_record += 1
-                if self._step_record == self.maxsteps:
-                    max_steps_not_exceeded = False
+                self._iter += 1
+                if self._iter == self.maxsteps:
+                    max_steps_reached = True
                     break
                 # Need a re-annealing process?
                 if temperature < self._temperature_restart:
                     break
                 # starting Markov chain
                 self._x = self.mc.run(self._x, i, temperature)
-
-
-    def local_search(self):
-        pass
-
-    def gradient(self):
-        pass
-
-    def ernergy(self):
-        pass
 
     @property
     def result(self):
@@ -315,7 +313,7 @@ class HyGSARunner(object):
         res.x = self._xmin
         res.fun = self._fvalue
         res.message = self._message
-        res.nit = self._step_record
+        res.nit = self._iter
         return res
 
 
