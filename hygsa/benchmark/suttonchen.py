@@ -1,16 +1,13 @@
-##############################################################################
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-##############################################################################
+# Copyright (c) 2017 Sylvain Gubian <sylvain.gubian@pmi.com>,
+# Yang Xiang <yang.xiang@pmi.com>
+# Author: Sylvain Gubian, PMP S.A.
 # -*- coding: utf-8 > -*-
 import numpy as np
 import numpy.testing as npt
 try:
-    from scipy.optimize import gensa
+    from scipy.optimize import hygsa
 except:
-    from pygensa import gensa
+    from hygsa import hygsa
 __author__ = "Sylvain Gubian"
 __copyright__ = "Copyright 2016, PMP SA"
 __license__ = "GPL2.0"
@@ -59,7 +56,7 @@ def main():
     lw = [-0.7] * (3 * n_particles)
     up = [0.7] * (3 * n_particles)
     np.random.seed(123)
-    ret = gensa(sutton_chen, None, bounds=(zip(lw, up)))
+    ret = hygsa(sutton_chen, None, bounds=(zip(lw, up)))
     # np.set_printoptions(precision=4)
     print('xmin =\n{}'.format(np.array2string(ret.x, max_line_width=40)))
     print("global minimum: f(xmin) = {}".format(ret.fun))

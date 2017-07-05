@@ -1,10 +1,8 @@
-##############################################################################
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-##############################################################################
+# Copyright (c) 2017 Sylvain Gubian <sylvain.gubian@pmi.com>,
+# Yang Xiang <yang.xiang@pmi.com>
+# Author: Sylvain Gubian, PMP S.A.
 # -*- coding: utf-8 -*-
+
 import inspect
 from collections import OrderedDict
 from tokenize import untokenize, NUMBER, NAME, OP, NEWLINE
@@ -136,7 +134,12 @@ class GOClass2RConverter(object):
         # counter increment
         del fun_code[0:1]
         fun_code = '\n'.join(fun_code)
-        r_fun_code = '{0} <- function(x) {{ N <- {1}; {2}; if (is.na(RET)) RET <- 1e13; if (firstHit && RET <= TolF) {{ fn.call.suc <<- nfev; feval.suc <<- RET; firstHit <<- FALSE;}}\nreturn(RET) }}'.format(
+        r_fun_code = (
+            '{0} <- function(x) {{ N <- {1}; {2};'
+            'if (is.na(RET)) RET <- 1e13; '
+            'if (firstHit && RET <= TolF) {{ '
+            'fn.call.suc <<- nfev; feval.suc <<- RET; firstHit <<- FALSE;}}'
+            '\nreturn(RET) }}').format(
                 'fun', self.dim, pyfun2r(fun_code))
         r_fun = self.r(r_fun_code)
         return r_fun
@@ -148,7 +151,9 @@ class GOClass2RConverter(object):
         # counter increment
         del fun_code[0:1]
         fun_code = '\n'.join(fun_code)
-        r_fun_code = '{0} <- function(x) {{ N <- {1}; nfev <- 0; {2}; if (is.na(RET)) RET <- 1e13; \nreturn(RET) }}'.format(
+        r_fun_code = ('{0} <- function(x) {{ N <- {1}; '
+                      'nfev <- 0; {2}; if (is.na(RET)) RET <- 1e13'
+                      '\nreturn(RET) }}').format(
                 'fun', self.dim, pyfun2r(fun_code))
         r_fun = self.r(r_fun_code)
         return r_fun

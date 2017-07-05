@@ -1,22 +1,14 @@
-##############################################################################
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-##############################################################################
+# Copyright (c) 2017 Sylvain Gubian <sylvain.gubian@pmi.com>,
+# Yang Xiang <yang.xiang@pmi.com>
+# Author: Sylvain Gubian, PMP S.A.
 # -*- coding: utf-8 -*-
 import os
 import sys
 import logging
 from .bench import Benchmarker
-from .benchstore import BenchStore
+from .benchstore import report
 import subprocess
 import argparse
-
-__author__ = "Sylvain Gubian"
-__copyright__ = "Copyright 2016, PMP SA"
-__license__ = "GPL2.0"
-__email__ = "Sylvain.Gubian@pmi.com"
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +62,7 @@ def run_all_bench():
     # Generating the csv report file from the benchmark 
     path = os.path.join(output_folder, 'results.csv')
     logger.info('Reading all results data...')
-    BenchStore.report(
+    report(
         kind='csv', path=path, folder=output_folder)
 
     # Generate table and figure with Yang R script
@@ -78,7 +70,7 @@ def run_all_bench():
     r_script_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__),
         'scripts',
-        'PyGenSA.R'))
+        'HyGSA.R'))
     cmd = [
         'R', 'CMD', 'BATCH',
         r_script_path,

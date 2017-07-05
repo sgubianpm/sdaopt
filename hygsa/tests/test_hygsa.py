@@ -1,15 +1,21 @@
+##############################################################################
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+##############################################################################
 """
-Unit tests for the Generalized Simulated Annealing global optimizer
+Unit tests for the Hybrid Generalized Simulated Annealing global optimizer
 """
-from pygensa.gensa import gensa
-from pygensa.gensa import GenSARunner
+from hygsa import hygsa
+from hygsa import HyGSARunner
 import numpy as np
 from numpy.testing import (assert_equal, TestCase, assert_allclose,
                            assert_almost_equal, assert_raises,
                            assert_array_less)
 
 
-class TestGenSA(TestCase):
+class TestHyGSA(TestCase):
 
     def setUp(self):
         # Using Rastrigin function for performing tests
@@ -25,11 +31,11 @@ class TestGenSA(TestCase):
         pass
 
     def test_low_dim(self):
-        ret = gensa(self.func, None, self.ld_bounds)
+        ret = hygsa(self.func, None, self.ld_bounds)
         assert_allclose(ret.fun, 0., atol=1e-12)
 
     def test__visiting_dist(self):
-        gr = GenSARunner(*(self.defautgr))
+        gr = HyGSARunner(*(self.defautgr))
         values = np.zeros(self.nbtestvalues)
         for i in np.arange(self.nbtestvalues):
             values[i] = gr._visita()
@@ -41,18 +47,18 @@ class TestGenSA(TestCase):
         assert_array_less(1e+10, np.max(values))
 
     def test_high_dim(self):
-        ret = gensa(self.func, None, self.hd_bounds)
+        ret = hygsa(self.func, None, self.hd_bounds)
         assert_allclose(ret.fun, 0., atol=1e-12)
 
     def test__smooth_search(self):
-        gr = GenSARunner(*(self.defautgr))
+        gr = HyGSARunner(*(self.defautgr))
         gr._xbuffer = np.array([0.05, 0.05])
         gr._smooth_search()
         assert_allclose(gr._xbuffer, 0, atol=1e-8)
         assert_equal(gr._fvalue, 0)
 
     def test__yygas(self):
-        gr = GenSARunner(*(self.defautgr))
+        gr = HyGSARunner(*(self.defautgr))
         values = np.zeros(self.nbtestvalues)
         for i in np.arange(self.nbtestvalues):
             values[i] = gr._yygas()
@@ -61,14 +67,14 @@ class TestGenSA(TestCase):
         assert_almost_equal(np.std(values), 1., 1)
 
     def test_max_reinit(self):
-        assert_raises(ValueError, gensa, *(self.weirdfunc,
+        assert_raises(ValueError, HyGSA, *(self.weirdfunc,
             None, self.ld_bounds))
 
     def test_reproduce(self):
         seed = 1234
-        res1 = gensa(self.func, None, self.ld_bounds, seed=seed)
-        res2 = gensa(self.func, None, self.ld_bounds, seed=seed)
-        res3 = gensa(self.func, None, self.ld_bounds, seed=seed)
+        res1 = hygsa(self.func, None, self.ld_bounds, seed=seed)
+        res2 = hygsa(self.func, None, self.ld_bounds, seed=seed)
+        res3 = hygsa(self.func, None, self.ld_bounds, seed=seed)
         # If we have reproducible results, x components found has to
         # be exactly the same, which is not the case with no seeding
         assert_equal(res1.x, res2.x)
@@ -76,6 +82,6 @@ class TestGenSA(TestCase):
 
     def test_bounds_integrity(self):
         wrong_bounds = [(-5.12, 5.12), (1, 0), (5.12, 5,12)]
-        assert_raises(ValueError, gensa, *(self.func,
+        assert_raises(ValueError, hygsa, *(self.func,
             None, wrong_bounds))
 

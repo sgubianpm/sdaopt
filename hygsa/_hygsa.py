@@ -1,9 +1,9 @@
-# Generalized simulated annealing implementation.
+# Hybrid Generalized simulated annealing implementation.
 # Copyright (c) 2016 Sylvain Gubian <sylvain.gubian@pmi.com>,
 # Yang Xiang <yang.xiang@pmi.com>
 # Author: Sylvain Gubian, PMP S.A.
 """
-gensa: A generalized simulated annealing global optimization algorithm
+hygsa: A generalized simulated annealing global optimization algorithm
 """
 from __future__ import division, print_function, absolute_import
 
@@ -13,7 +13,7 @@ from scipy.optimize import _lbfgsb
 from scipy.special import gammaln
 from scipy._lib._util import check_random_state
 
-__all__ = ['gensa']
+__all__ = ['hygsa']
 
 
 class VisitingDistribution(object):
@@ -221,7 +221,7 @@ class ObjectiveFunctionWrapper():
 
 
 
-class GenSARunner(object):
+class HyGSARunner(object):
 
     def __init__(self, fun, x0, bounds, args=(), seed=None,
                  temperature_start=5230, qv=2.62, qa=-5.0, maxfun=1e7,

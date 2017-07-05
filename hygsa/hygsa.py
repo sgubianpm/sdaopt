@@ -1,9 +1,9 @@
-# Generalized simulated annealing implementation.
-# Copyright (c) 2016 Sylvain Gubian <sylvain.gubian@pmi.com>,
+# Hybrid Generalized simulated annealing implementation.
+# Copyright (c) 2017 Sylvain Gubian <sylvain.gubian@pmi.com>,
 # Yang Xiang <yang.xiang@pmi.com>
 # Author: Sylvain Gubian, PMP S.A.
 """
-gensa: A generalized simulated annealing global optimization algorithm
+hygsa: An Hybrid Generalized Simulated Annealing global optimization algorithm
 """
 from __future__ import division, print_function, absolute_import
 
@@ -14,10 +14,10 @@ from scipy.optimize import _lbfgsb
 from scipy.special import gammaln
 from scipy._lib._util import check_random_state
 
-__all__ = ['gensa']
+__all__ = ['hygsa']
 
-class GenSARunner(object):
-    """This class implements the core of the gensa algorithm.
+class HyGSARunner(object):
+    """This class implements the core of the hygsa algorithm.
 
     fun : callable
         The objective function
@@ -42,7 +42,7 @@ class GenSARunner(object):
         function and new coordinates generation.
     temp_start : float, optional
         The initial temperature, use higher values to facilitates a wider
-        search of the energy landscape, allowing gensa to escape local minima
+        search of the energy landscape, allowing hygsa to escape local minima
         that it is trapped in.
     qv : float, optional
         Parameter for visiting distribution. Higher values give the visiting
@@ -58,7 +58,7 @@ class GenSARunner(object):
         exceeded, the algorithm will stop just after the local search is
         done.
     maxsteps : int, optional
-        The maximum number of gensa iterations will perform.
+        The maximum number of hygsa iterations will perform.
     """
 
     KSPRING = 1.e8
@@ -509,7 +509,7 @@ class GenSARunner(object):
         res.nit = self._step_record
         return res
 
-def gensa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
+def hygsa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
         accept=-5.0, maxfun=1e7, args=(), seed=None, pure_sa=False):
     """
     Find the global minimum of a function using the Generalized Simulated
@@ -531,10 +531,10 @@ def gensa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
         `func`. It is required to have ``len(bounds) == len(x)``.
         ``len(bounds)`` is used to determine the number of parameters in ``x``.
     maxiter : int, optional
-        The maximum number of gensa iterations
+        The maximum number of hygsa iterations
     initial_temp : float, optional
         The initial temperature, use higher values to facilitates a wider
-        search of the energy landscape, allowing gensa to escape local minima
+        search of the energy landscape, allowing hygsa to escape local minima
         that it is trapped in.
     visit : float, optional
         Parameter for visiting distribution. Higher values give the visiting
@@ -573,12 +573,13 @@ def gensa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
 
     Notes
     -----
-    GenSA is an implementation of the General Simulated Annealing algorithm
-    (GSA [2]_). This stochastic approach generalizes CSA (Classical Simulated
-    Annealing) and FSA (Fast Simulated Annealing) to find the neighborhood of
-    minima, then calls a local method (lbfgsb) to find their exact value.
-    GenSA can process complicated and high dimension non-linear objective
-    functions with a large number of local minima as described by [6]_.
+    HyGSA is an implementation of the Hybrid General Simulated Annealing
+    algorithm (GSA [2]_). This stochastic approach generalizes CSA (Classical
+    Simulated Annealing) and FSA (Fast Simulated Annealing) to find the
+    neighborhood of minima, then calls a local method (lbfgsb) to find their
+    exact value. HyGSA can process complicated and high dimension non-linear
+    objective functions with a large number of local minima as
+    described by [6]_.
 
     GSA uses a distorted Cauchy-Lorentz visiting distribution, with its shape
     controlled by the parameter :math:`q_{v}`
@@ -646,16 +647,16 @@ def gensa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
     The function involved is called Rastrigin
     (https://en.wikipedia.org/wiki/Rastrigin_function)
 
-    >>> from scipy.optimize import gensa
+    >>> from scipy.optimize import hygsa
     >>> func = lambda x: np.sum(x * x - 10 * np.cos(
     ...    2 * np.pi * x)) + 10 * np.size(x)
     >>> lw = [-5.12] * 10
     >>> up = [5.12] * 10
-    >>> ret = gensa(func, None, bounds=(zip(lw, up)))
+    >>> ret = hygsa(func, None, bounds=(zip(lw, up)))
     >>> print("global minimum: xmin = {0}, f(xmin) = {1}".format(
     ...    ret.x, ret.fun))
     """
-    gr = GenSARunner(func, x0, bounds, args, seed,
+    gr = HyGSARunner(func, x0, bounds, args, seed,
             temperature_start=initial_temp, qv = visit, qa = accept,
             maxfun=maxfun, maxsteps=maxiter,pure_sa=pure_sa)
     gr.start_search()

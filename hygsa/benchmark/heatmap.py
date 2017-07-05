@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-##############################################################################
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-##############################################################################
+# Copyright (c) 2017 Sylvain Gubian <sylvain.gubian@pmi.com>,
+# Yang Xiang <yang.xiang@pmi.com>
+# Author: Sylvain Gubian, PMP S.A.
 # -*- coding: utf-8 -*-
+
 import sys
 import numpy as np
 import pandas as pd
@@ -13,12 +11,6 @@ import matplotlib.pyplot as plt
 from .benchstore import BenchStore
 import scipy.cluster.hierarchy as sch
 import fastcluster
-
-__author__ = "Sylvain Gubian"
-__license__ = "Simplified BSD license"
-__version__ = "0.0.1"
-__email__ = "Sylvain.Gubian@pmi.com"
-
 
 def get_data(path):
     data = BenchStore.report(path, kind='raw')

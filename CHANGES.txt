@@ -9,3 +9,10 @@ Initial Python implementation
 - Improved setup.py with entry points
 - Added MANIFEST.in for R scripts
 - Renamed README.md to README.rst to avoid warning in package build
+
+0.0.3
+-----
+- Improved implementation and border effect risk by breaking algorithm in modular pieces 
+- Generic minimizer used instead of calling L-BFGS-B with custom gradient
+- Fresh re-annealing implementation
+

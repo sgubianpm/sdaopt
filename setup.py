@@ -1,11 +1,3 @@
-##############################################################################
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# Author: Sylvain Gubian, PMP SA
-##############################################################################
 import os
 
 from setuptools import setup, find_packages
@@ -18,15 +10,15 @@ requires = [
     'numpy',
     'scipy',
     'pytest',
-    'pyswarm',
-    'matplotlib',
+    #'pyswarm',
+    #'matplotlib',
     #  'fastcluster',
     ]
 
 setup(
-        name='pyhgsa',
-        version='0.0.2',
-        description='Hybrid General Simulated Annealing algorithm and benchmark',
+        name='hygsa',
+        version='0.0.3',
+        description='Hybrid General Simulated Annealing and benchmark',
         long_description=README + '\n\n' +  CHANGES,
         classifiers=[
             "Programming Language :: Python",
@@ -37,17 +29,16 @@ setup(
           ],
         author='Sylvain Gubian, PMP SA',
         author_email='sylvain.gubian@pmi.com',
-        url='https://github.com/sgubianpm/pyhgsa',
+        url='https://github.com/sgubianpm/HyGSA',
         keywords='optimization benchmarking simulated annealing',
         packages=find_packages(),
         include_package_data=True,
         entry_points = {
             'console_scripts':
-            ['hgsa_bench=pyhgsa.benchmark.workflow:run_all_bench'],
+            ['hygsa_bench=hygsa.benchmark.workflow:run_all_bench'],
         },
         zip_safe=False,
         install_requires=requires,
         tests_require=requires,
         test_suite="tests",
       )
-

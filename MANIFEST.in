@@ -1,4 +1,4 @@
 include README.md
 include CHANGES.txt
-include pygensa/benchmark/scripts/PyGenSA.R
-include pygensa/benchmark/scripts/bench.R
+include hygsa/benchmark/scripts/HyGSA.R
+include hygsa/benchmark/scripts/bench.R

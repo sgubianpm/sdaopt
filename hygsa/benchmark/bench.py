@@ -1,10 +1,8 @@
-##############################################################################
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-##############################################################################
+# Copyright (c) 2017 Sylvain Gubian <sylvain.gubian@pmi.com>,
+# Yang Xiang <yang.xiang@pmi.com>
+# Author: Sylvain Gubian, PMP S.A.
 # -*- coding: utf-8 -*-
+
 import sys
 import os
 import time
@@ -19,20 +17,15 @@ from scipy.optimize import differential_evolution
 from scipy.optimize import brute 
 from scipy.optimize import minimize
 try:
-# If gensa is available in SciPy
-    from scipy.optimize import gensa
-# Otherwise use the local gensa implementation
+# If hygsa is available in SciPy (maybe in the future)
+    from scipy.optimize import hygsa
+# Otherwise use the module hygsa implementation
 except:
-    from pygensa.gensa import gensa
+    from hygsa import hygsa
 from pyswarm import pso
-import pygensa.benchmark.go_benchmark_functions as gbf
+import hygsa.benchmark.go_benchmark_functions as gbf
 from .job import Job
 from .benchunit import BenchUnit
-
-__author__ = "Sylvain Gubian"
-__copyright__ = "Copyright 2016, PMP SA"
-__license__ = "GPL2.0"
-__email__ = "Sylvain.Gubian@pmi.com"
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +81,7 @@ class MyBounds(object):
 class Benchmarker(object):
     def __init__(self, nbruns, folder):
         self.algorithms = [
-            GenSAOptimizer(), BHOptimizer(), DEOptimizer(),
+            HyGSAOptimizer(), BHOptimizer(), DEOptimizer(),
             DERestartOptimizer(), PSOptimizer(), PSORestartOptimizer(),
             BFOptimizer(), BHRestartOptimizer(),
         ]
@@ -322,14 +315,14 @@ class Algo(object):
             raise OptimumFoundException('FOUND')
         return res
 
-class GenSAOptimizer(Algo):
+class HyGSAOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
-        self.name = 'GenSA'
+        self.name = 'HyGSA'
 
     def optimize(self):
         Algo.optimize(self)
-        gensa(
+        hygsa(
             func=self._funcwrapped, x0=None,
             bounds=list(zip(self._lower, self._upper)), maxiter=MAX_IT,
             pure_sa=False)

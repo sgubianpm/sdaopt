@@ -1,6 +1,6 @@
-# PyHGSA
+# HyGSA (improved old PyGenSA)
 
-Hybrid Generalized simmulated annealing global optimization algorithm implementation and extensive benchmark. **Testing functions** used in the benchmark have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project.
+Hybrid Generalized simmulated annealing global optimization algorithm implementation and extensive benchmark. **Testing functions** used in the benchmark (except suttonchen) have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project.
 
 Results of the benchmarks are available at:
 https://gist.github.com/sgubianpm/7d55f8d3ba5c9de4e9f0f1ffff1aa6cf
@@ -15,8 +15,8 @@ https://github.com/scipy/scipy/pull/6569
 ## Installation from source
 
 ```bash
-git clone https://github.com/sgubianpm/pyhgsa.git
-cd pyhgsa
+git clone https://github.com/sgubianpm/HyGSA.git
+cd HyGSA
 # Activate your appropriate python virtual environment if needed
 python setup.py install
 ```
@@ -24,14 +24,14 @@ python setup.py install
 ## How to use it
 ```python
 import numpy as np
-from pyhgsa import hgsa
+from hygsa import hygsa
 # Defining Rastring function as a test function
 func = lambda x: np.sum(x * x - 10 * np.cos(2 * np.pi * x)) + 10 * np.size(x)
 # Setting bounds
 lw = [-5.12] * 10
 up = [5.12] * 10
 # Running the optimization computation
-ret = hgsa(func, None, bounds=(zip(lw, up)))
+ret = hygsa(func, None, bounds=(zip(lw, up)))
 # Showing results
 print("global minimum: xmin = {0}, f(xmin) = {1}".format(ret.x, ret.fun))
 ```
@@ -43,7 +43,7 @@ print("global minimum: xmin = {0}, f(xmin) = {1}".format(ret.x, ret.fun))
 # Replace NB_RUNS by your values (default value is 100)
 # NB_RUNS is the number of runs done for each testing function and algorithm used
 # The script uses all available cores on the machine.
-hgsa_bench --nb-runs NB_RUNS
+hygsa_bench --nb-runs NB_RUNS
 ```
 
 ## Running benchmark on a cluster (Example for Moab/TORQUE)
@@ -61,7 +61,7 @@ Below a script content example for Maob/TORQUE:
 #MSUB -o OUTPUT_FOLDER/bench.out
 #MSUB -e OUTPUT_FOLDER/bench.err
 source YOUR_PYTHON_VIRTUAL_ENV/bin/activate 
-hgsa_bench --nb-runs 100 --output-folder OUTPUT_FOLDER 
+hygsa_bench --nb-runs 100 --output-folder OUTPUT_FOLDER 
 ```
 On your machine that is able to submit jobs to the cluster
 ```bash
