@@ -29,6 +29,9 @@ class TestHyGSA(TestCase):
         self.ld_bounds = [(-5.12, 5.12)] * 2
         self.hd_bounds = self.ld_bounds * 5
         self.nbtestvalues = 5000
+        self.high_temperature = 5230
+        self.low_temperature = 0.1
+        self.qv = 2.62
         self.defautgr = (self.func, None, self.ld_bounds)
 
     def tearDown(self):
@@ -38,11 +41,14 @@ class TestHyGSA(TestCase):
         ret = hygsa(self.func, None, self.ld_bounds)
         assert_allclose(ret.fun, 0., atol=1e-12)
 
-    def test__visiting_dist(self):
-        gr = HyGSARunner(*(self.defautgr))
+    def test__visiting_dist_high_temperature(self):
+        lu = list(zip(*self.ld_bounds))
+        lower = np.array(lu[0])
+        upper = np.array(lu[1])
+        vd = VisitingDistribution(lower, upper, self.qv) 
         values = np.zeros(self.nbtestvalues)
         for i in np.arange(self.nbtestvalues):
-            values[i] = gr._visita()
+            values[i] = vd.visiting_fn(self.high_temperature)
         # Visiting distribution is a distorted version of Cauchy-Lorentz
         # distribution, and as no 1st and higher moments (no mean defined,
         # no variance defined).
