@@ -41,21 +41,6 @@ class TestHyGSA(TestCase):
         ret = hygsa(self.func, None, self.ld_bounds)
         assert_allclose(ret.fun, 0., atol=1e-12)
 
-    def test__visiting_dist_high_temperature(self):
-        lu = list(zip(*self.ld_bounds))
-        lower = np.array(lu[0])
-        upper = np.array(lu[1])
-        vd = VisitingDistribution(lower, upper, self.qv) 
-        values = np.zeros(self.nbtestvalues)
-        for i in np.arange(self.nbtestvalues):
-            values[i] = vd.visiting_fn(self.high_temperature)
-        # Visiting distribution is a distorted version of Cauchy-Lorentz
-        # distribution, and as no 1st and higher moments (no mean defined,
-        # no variance defined).
-        # Check that big tails values are generated
-        assert_array_less(np.min(values), 1e-10)
-        assert_array_less(1e+10, np.max(values))
-
     def test_high_dim(self):
         ret = hygsa(self.func, None, self.hd_bounds)
         assert_allclose(ret.fun, 0., atol=1e-12)
@@ -77,7 +62,7 @@ class TestHyGSA(TestCase):
         assert_almost_equal(np.std(values), 1., 1)
 
     def test_max_reinit(self):
-        assert_raises(ValueError, HyGSA, *(self.weirdfunc,
+        assert_raises(ValueError, hygsa, *(self.weirdfunc,
             None, self.ld_bounds))
 
     def test_reproduce(self):
