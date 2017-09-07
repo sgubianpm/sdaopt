@@ -21,34 +21,33 @@ class VisitingDistribution(object):
     tail_limit = 1.e8
     min_visit_bound = 1.e-10
 
-    def __init__(self, lb, ub, qv, seed=None):
+    def __init__(self, lb, ub, qv, rs):
         self.qv = qv
-        self.rs = check_random_state(seed)
+        self.rs = rs 
         self.lower = lb
         self.upper = ub
         self.b_range = ub - lb
         self.x_gauss = None
+        self.s_gauss = 0
         self.root_gauss = None
 
     def visiting(self, x, step, temperature):
-        x_visit = np.copy(x)
-        dim = x_visit.size()
+        dim = x.size
         if step < dim:
             # Changing all coordinates with a new visting value
-            visits = np.array([self.visit_fn(temperature) for _ in range(dim)])
-            bigs = np.where(visits > self.tail_limit)[0]
-            smalls = np.where(visits < -self.tail_limit)[0]
-            visits[bigs] = self.tail_limit * self.rs.random_sample(len(bigs))
-            visits[smalls] = -self.tail_limit * self.rs.random_sample(
-                len(smalls))
-            x_visit += visits
-            a = x - self.lower
+            visits = np.array([self.visit_fn(
+                temperature) for _ in range(dim)])
+            visits[visits > self.tail_limit] = self.tail_limit * self.rs.random_sample()
+            visits[visits < -self.tail_limit] = -self.tail_limit * self.rs.random_sample()
+            x_visit = visits + x
+            a = x_visit - self.lower
             b = np.fmod(a, self.b_range) + self.b_range
             x_visit = np.fmod(b, self.b_range) + self.lower
             x_visit[np.fabs(
                 x_visit - self.lower) < self.min_visit_bound] += 1.e-10
         else:
             # Changing only one coordinate at a time based on Markov chain step
+            x_visit = np.copy(x)
             visit = self.visit_fn(temperature)
             if visit > self.tail_limit:
                 visit = self.tail_limit * self.rs.random_sample()
@@ -56,7 +55,7 @@ class VisitingDistribution(object):
                 visit = -self.tail_limit * self.rs.random_sample()
             index = step - dim
             x_visit[index] = visit + x[index]
-            a = x_visit - self.lower[index]
+            a = x_visit[index] - self.lower[index]
             b = np.fmod(a, self.b_range[index]) + self.b_range[index]
             x_visit[index] = np.fmod(b, self.b_range[
                 index]) + self.lower[index]
@@ -85,12 +84,16 @@ class VisitingDistribution(object):
 
     def gaussian_fn(self, axis):
         if axis == 1:
-            s_gauss = 0
-            while(s_gauss <= 0 or s_gauss >= 1):
-                self.x_gauss = self.rs.random_sample() * 2.0 - 1.0
-                y_gauss = self.rs.random_sample() * 2.0 - 1.0
-                s_gauss = self.x_gauss ** 2 + y_gauss ** 2
-            self.root_gauss = np.sqrt(-2.0 / s_gauss * np.log(s_gauss))
+            enter = True
+            while(enter or (self.s_gauss <= 0 or self.s_gauss >= 1)):
+                enter = False
+                sample1 = self.rs.random_sample()
+                self.x_gauss =  sample1 * 2.0 - 1.0
+                sample2 = self.rs.random_sample()
+                y_gauss = sample2 * 2.0 - 1.0
+                self.s_gauss = self.x_gauss ** 2 + y_gauss ** 2
+            self.root_gauss = np.sqrt(-2.0 / self.s_gauss * np.log(
+                self.s_gauss))
             return self.root_gauss * y_gauss
         else:
             return self.root_gauss * self.x_gauss
@@ -108,6 +111,15 @@ class EnergyState():
         self.lower = lower
         self.upper = upper
 
+    def __str__(self):
+        return 'Current: {0}@{1} Best: {2}@{3}'.format(
+            self.current_energy, self.current_location, self._ebest,
+            self.xbest,
+        )
+
+    def __repr__(self):
+        return self.__str__
+
     def reset(self, owf, rs, x0=None):
         owf.nb_fun_call = 0
         if x0 is None:
@@ -115,10 +127,13 @@ class EnergyState():
                 len(self.lower)) * (self.upper - self.lower)
         else:
             self.current_location = np.copy(x0)
+        self.xbest = np.copy(self.current_location)
         init_error = True
         reinit_counter = 0
         while init_error:
-            self.current_energy = owf.fun(self.current_location)
+            self.current_energy = owf.func(self.current_location)
+            self.ebest = self.current_energy
+            self.xbest = np.copy(self.current_location)
             if (self.current_energy >= BIG_VALUE or
                     np.isnan(self.current_energy)):
                 if reinit_counter >= self.MAX_REINIT_COUNT:
@@ -131,18 +146,18 @@ class EnergyState():
                     raise ValueError(message)
                 self.current_location = self.lower + rs.random_sample(
                     self.lower.size) * (self.upper - self.lower)
+                self.xbest = np.copy(self.current_location)
                 reinit_counter += 1
             else:
                 init_error = False
 
 
-
 class MarkovChain(object):
 
-    def __init__(self, qa, vd, ofw, seed, state):
+    def __init__(self, qa, vd, ofw, rs, state):
         # Local markov chain minimum energy and location
-        self.emin = None
-        self.xmin = None
+        self.emin = state.current_energy
+        self.xmin = np.array(state.current_location)
         # Global optimizer state
         self.state = state
         # Acceptance parameter
@@ -153,22 +168,25 @@ class MarkovChain(object):
         self.ofw = ofw
         self.not_improved_idx = 0
         self.not_improved_max_idx = 1000
-        self._rs = check_random_state(seed)
+        self._rs = rs 
 
     def run(self, step, temperature):
-        self.state_improved = False
-        if step == 0:
-            self.state_improved = True
-        for j in range(self.x.size() * 2):
-            x_visit = vd.visiting(
-                self.state.current_location, step, temperature)
+        temperature_step = temperature / float(step + 1)
+        self.not_improved_idx += 1
+        for j in range(self.state.current_location.size * 2):
+            if j == 0:
+                self.state_improved = False
+            if step == 0 and j == 0:
+                self.state_improved = True
+            x_visit = self.vd.visiting(
+                self.state.current_location, j, temperature)
             # Calling the objective function  
             e = self.ofw.func_wrapper(x_visit)
             if e < self.state.current_energy:
+                #  print('Better energy: {0}'.format(e))
                 # We have got a better ernergy value
                 self.state.current_energy = e
                 self.state.current_location = np.copy(x_visit)
-                # Check if it is the best one
                 if e < self.state.ebest:
                     self.state.ebest = e
                     self.state.xbest = np.copy(x_visit)
@@ -177,8 +195,8 @@ class MarkovChain(object):
             else:
                 # We have not improved but do we accept the new location?
                 r = self._rs.random_sample()
-                pqa_temp = (self.qa - 1.0) * (e - state.current_energy) / (
-                    temperature / (float(step + 1))) + 1.0
+                pqa_temp = (self.qa - 1.0) * (
+                    e - self.state.current_energy) / temperature_step + 1.0
                 if pqa_temp < 0.:
                     pqa = 0.
                 else:
@@ -187,12 +205,12 @@ class MarkovChain(object):
                     # We accept the new location and update state
                     self.state.current_energy = e
                     self.state.current_location = np.copy(x_visit)
+
                 # No improvement since long time
-                if self.not_improved_index == self.not_improved_max_idx:
-                    if j == 0 or state.current_energy < self.emin:
+                if self.not_improved_idx >= self.not_improved_max_idx:
+                    if j == 0 or self.state.current_energy < self.emin:
                         self.emin = self.state.current_energy 
-                        self.xmin = np.copy(self.state.current_energy)
-                self.not_improved_index += 1
+                        self.xmin = np.copy(self.state.current_location)
         # End of MarkovChain loop
 
     def local_search(self):
@@ -200,75 +218,80 @@ class MarkovChain(object):
         # based on Markov chain results
         # If energy has been improved or no improvement since too long,
         # performing a local search with the best Markov chain location
-        if (self.state_improved or
-                self.not_improved_idx == self.not_improved_max_idx): 
-            e, x = self.ofw.local_search(self.xmin)
-            if x is None:
-                # Local search algorithm failed
-                return
-        else:
-            return
         if self.state_improved:
             # Global energy has improved, let's see if LS improved further
+            e, x = self.ofw.local_search(self.state.xbest)
             if e < self.state.ebest:
-                self.index_no_emin_update = 0
+                self.not_improved_idx = 0
                 self.state.ebest = e
                 self.state.xbest = np.copy(x)
+                self.state.current_energy = e
+                self.state.current_location = np.copy(x)
             # Global energy not improved, let's see what LS gives
             # on the best Markov chain location
-        if self.not_improved_idx == self.not_improved_max_idx:
-            self.not_improved_idx = 0
-            self.not_improved_max_idx = self.xmin.size
-            self.emin = e
+        if self.not_improved_idx >= self.not_improved_max_idx:
+            e, x = self.ofw.local_search(self.xmin)
             self.xmin = np.copy(x)
-            if self.emin < state.ebest:
-                state.ebest = self.emin 
-                state.xbest = np.copy(self.xmin)
+            self.emin = e
+            self.not_improved_idx = 0
+            self.not_improved_max_idx = self.state.current_location.size
+            if e < self.state.ebest:
+                self.state.ebest = self.emin 
+                self.state.xbest = np.copy(self.xmin)
+                self.state.current_energy = e
+                self.state.current_location = np.copy(x)
 
-class ObjectiveFunWrapper():
+class ObjectiveFunWrapper(object):
 
-    def __init__(self, bounds, func, minimizer, **kwargs):
+    def __init__(self, bounds, func, **kwargs):
         self.func = func
+        self.nb_fun_call = 0
         self.kwargs = kwargs
-        self.minimizer = minimizer
+        self.minimizer = minimize 
+        self.fun_args = None
+        lu = list(zip(*bounds))
+        self.lower = np.array(lu[0])
+        self.upper = np.array(lu[1])
 
-        # By default, L-BFGS-B is used with a custom 3 points gradient
+        # By default, scipy L-BFGS-B is used with a custom 3 points gradient
         # computation
-        if self.minimizer is None:
-            # Use scipy.optimize.minimize optimizer
-            self.minimizer = minimize 
-            if 'method' not in self.kwargs:
-                self.kargs['method'] = 'L-BFGS-B'
-            if 'jac' not in self.kwargs:
-                self.kwargs['jac'] = self.gradient
-            if 'bounds' not in self.kwargs:
-                self.kwargs['bounds'] = bounds
+        if 'method' not in self.kwargs:
+            self.kwargs['method'] = 'L-BFGS-B'
+        if 'jac' not in self.kwargs:
+            self.kwargs['jac'] = self.gradient
+        if 'bounds' not in self.kwargs:
+            self.kwargs['bounds'] = bounds
+        if 'args' in self.kwargs:
+            self.fun_args = self.kwargs.get('args')
+        else:
+            self.fun_args= ()
+        if 'reps' in self.kwargs:
+            self.reps = self.kwargs.get('reps')
+        else:
+            self.reps = 1.e-6 
 
-    def func_wrapper(self, x, **kwargs):
-        self.nb_func_call += 1
-        return self.func(x, **kwargs)
+    def func_wrapper(self, x):
+        self.nb_fun_call += 1
+        return self.func(x, *self.fun_args)
 
     def gradient(self, x):
-        g = np.zeros(sx.size, np.float64)
-        next_f1 = None
+        g = np.zeros(x.size, np.float64)
         for i in range(x.size):
             x1 = np.array(x)
             x2 = np.array(x)
             respl = self.reps
             respr = self.reps
             x1[i] = x[i] + respr
-            if x1[i] > self._upper[i]:
-                x1[i] = self._upper[i]
+            if x1[i] > self.upper[i]:
+                x1[i] = self.upper[i]
                 respr = x1[i] - x[i]
             x2[i] = x[i] - respl
-            if x2[i] < self._lower[i]:
-                x2[i] = self._lower[i]
+            if x2[i] < self.lower[i]:
+                x2[i] = self.lower[i]
                 respl = x[i] - x2[i]
-            f1 = self.func_wrapper(x1, **self.kwargs)
-            if next_f1 is None:
-                f2 = self.func_wrapper(x2, **self.kwargs)
-                next_f1 = f2
-        g[i] = ((f1 - f2)) / (respl + respr)
+            f1 = self.func_wrapper(x1)
+            f2 = self.func_wrapper(x2)
+            g[i] = ((f1 - f2)) / (respl + respr)
         idx = np.logical_or(np.isnan(g), np.isinf(g))
         g[idx] = 101.0
         return g
@@ -283,7 +306,7 @@ class ObjectiveFunWrapper():
 class HyGSARunner(object):
     MAX_REINIT_COUNT = 1000
 
-    def __init__(self, fun, x0, bounds, minimizer=None, minimizer_kwargs=None,
+    def __init__(self, fun, x0, bounds, minimizer_kwargs=None,
                  seed=None, temperature_start=5230, qv=2.62, qa=-5.0,
                  maxfun=1e7, maxsteps=500, pure_sa=False):
         if x0 is not None and not len(x0) == len(bounds):
@@ -295,12 +318,14 @@ class HyGSARunner(object):
         if not np.all(lower < upper):
             raise ValueError('Bounds are note consistent min < max')
         # Wrapper for the objective function and minimizer
-        owf = ObjectiveFunWrapper(bounds, fun, minimizer, minimizer_kwargs)
+        if minimizer_kwargs is None:
+            minimizer_kwargs = dict()
+        self.owf = ObjectiveFunWrapper(bounds, fun, **minimizer_kwargs)
         # Initialization of RandomState for reproducible runs if seed provided
-        rs = check_random_state(seed)
+        self.rs = check_random_state(seed)
         # Initialization of the energy state
-        self.es = EnergyState(lower, upper, owf, rs) 
-        self.es.reset(x0)
+        self.es = EnergyState(lower, upper) 
+        self.es.reset(self.owf, self.rs, x0)
         # Maximum number of function call that can be used a stopping criterion
         self.maxfuncall = maxfun
         # Maximum number of step (main iteration)  that can be used as
@@ -311,18 +336,20 @@ class HyGSARunner(object):
         self.temperature_start = temperature_start
         self.temperature_restart = 0.1
         # VisitingDistribution instance
-        vd = VisitingDistribution(lower, upper, qv, seed)
+        vd = VisitingDistribution(lower, upper, qv, self.rs)
         # Markov chain instance
-        self.mc = MarkovChain(qa, vd, owf, seed, state)
+        self.mc = MarkovChain(qa, vd, self.owf, self.rs, self.es)
+        self.qv = qv
+        self.pure_sa = pure_sa
 
     def search(self):
         max_steps_reached = False
         self._iter = 0
+        t1 = np.exp((self.qv - 1) * np.log(2.0)) - 1.0
         while(not max_steps_reached):
             for i in range(self.maxsteps):
                 # Compute temperature for this step
                 s = float(i) + 2.0
-                t1 = np.exp((self.qv - 1) * np.log(2.0)) - 1.0
                 t2 = np.exp((self.qv - 1) * np.log(s)) - 1.0
                 temperature = self.temperature_start * t1 / t2
                 self._iter += 1
@@ -331,7 +358,7 @@ class HyGSARunner(object):
                     break
                 # Need a re-annealing process?
                 if temperature < self.temperature_restart:
-                    self.es.reset()
+                    self.es.reset(self.owf, self.rs)
                     break
                 # starting Markov chain
                 self.mc.run(i, temperature)
@@ -342,8 +369,163 @@ class HyGSARunner(object):
     def result(self):
         """ The OptimizeResult """
         res = OptimizeResult()
-        res.x = self._xmin
-        res.fun = self._fvalue
-        res.message = self._message
+        res.x = self.es.xbest
+        res.fun = self.es.ebest
         res.nit = self._iter
+        res.ncall = self.owf.nb_fun_call
         return res
+
+
+def hygsa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
+        accept=-5.0, maxfun=1e7, args=None, seed=None, pure_sa=False):
+    """
+    Find the global minimum of a function using the Generalized Simulated
+    Annealing algorithm
+
+    Parameters
+    ----------
+    func : callable
+        The objective function to be minimized.  Must be in the form
+        ``f(x, *args)``, where ``x`` is the argument in the form of a 1-D array
+        and ``args`` is a  tuple of any additional fixed parameters needed to
+        completely specify the function.
+    x0 : ndarray
+        The starting coordinates. If ``None`` is provided, initial
+        coordinates are automatically generated.
+    bounds : sequence
+        Bounds for variables.  ``(min, max)`` pairs for each element in ``x``,
+        defining the lower and upper bounds for the optimizing argument of
+        `func`. It is required to have ``len(bounds) == len(x)``.
+        ``len(bounds)`` is used to determine the number of parameters in ``x``.
+    maxiter : int, optional
+        The maximum number of hygsa iterations
+    initial_temp : float, optional
+        The initial temperature, use higher values to facilitates a wider
+        search of the energy landscape, allowing hygsa to escape local minima
+        that it is trapped in.
+    visit : float, optional
+        Parameter for visiting distribution. Higher values give the visiting
+        distribution a heavier tail, this makes the algorithm jump to a more
+        distant region. The value range is (0, 3]
+    accept : float, optional
+        Parameter for acceptance distribution. It is used to control the
+        probability of acceptance. The lower the acceptance parameter, the
+        smaller the probability of acceptance. It has to be any negative value.
+    maxfun : int, optional
+        Soft limit for the number of objective function calls. If the
+        algorithm is in the middle of a local search, this number will be
+        exceeded, the algorithm will stop just after the local search is
+        done.
+    args : tuple, optional
+        Any additional fixed parameters needed to
+        completely specify the objective function.
+    seed : int or `np.random.RandomState`, optional
+        If `seed` is not specified the `np.RandomState` singleton is used.
+        If `seed` is an int, a new `np.random.RandomState` instance is used,
+        seeded with seed.
+        If `seed` is already a `np.random.RandomState instance`, then that
+        `np.random.RandomState` instance is used.
+        Specify `seed` for repeatable minimizations. The random numbers
+        generated with this seed only affect the visiting distribution
+        function and new coordinates generation.
+
+    Returns
+    -------
+    res : OptimizeResult
+        The optimization result represented as a ``OptimizeResult`` object.
+        Important attributes are: ``x`` the solution array, ``fun`` the value
+        of the function at the solution, and ``message`` which describes the
+        cause of the termination.
+        See `OptimizeResult` for a description of other attributes.
+
+    Notes
+    -----
+    HyGSA is an implementation of the Hybrid General Simulated Annealing
+    algorithm (GSA [2]_). This stochastic approach generalizes CSA (Classical
+    Simulated Annealing) and FSA (Fast Simulated Annealing) to find the
+    neighborhood of minima, then calls a local method (lbfgsb) to find their
+    exact value. HyGSA can process complicated and high dimension non-linear
+    objective functions with a large number of local minima as
+    described by [6]_.
+
+    GSA uses a distorted Cauchy-Lorentz visiting distribution, with its shape
+    controlled by the parameter :math:`q_{v}`
+
+    .. math::
+
+        g_{q_{v}}(\\Delta x(t)) \\propto \\frac{ \\
+        \\left[T_{q_{v}}(t) \\right]^{-\\frac{D}{3-q_{v}}}}{ \\
+        \\left[{1+(q_{v}-1)\\frac{(\Delta x(t))^{2}} { \\
+        \\left[T_{q_{v}}(t)\\right]^{\\frac{2}{3-q_{v}}}}}\\right]^{ \\
+        \\frac{1}{q_{v}-1}+\\frac{D-1}{2}}}
+
+    Where :math:`t` is the artificial time. This visiting distribution is used
+    to generate a trial jump distance :math:`\Delta x(t)` of variable
+    :math:`x(t)` under artificial temperature :math:`T_{q_{v}}(t)`.
+
+    From the starting point, after calling the visiting distribution
+    function, the acceptance probability is computed as follows:
+
+    .. math::
+
+        p_{q_{a}} = \min{\{1,\\left[1-(1-q_{a}) \\beta \\Delta E \\right]^{ \\
+        \\frac{1}{1-q_{a}}}\\}}
+
+    Where :math:`q_{a}` is a acceptance parameter. For :math:`q_{a}<1`, zero
+    acceptance probability is assigned to the cases where
+
+    .. math::
+
+        [1-(1-q_{a}) \\beta \\Delta E] < 0
+
+    The artificial temperature :math:`T_{q_{v}}(t)` is decreased according to
+
+    .. math::
+
+        T_{q_{v}}(t) = T_{q_{v}}(1) \\frac{2^{q_{v}-1}-1}{\\left( \\
+        1 + t\\right)^{q_{v}-1}-1}
+
+    Where :math:`q_{v}` is the visiting parameter.
+
+    .. versionadded:: 0.19.0
+
+    References
+    ----------
+    .. [1] Tsallis C (1988). "Possible generalization of Boltzmann-Gibbs
+        statistics." Journal of Statistical Physics, 52, 479-487.
+    .. [2] Tsallis C, Stariolo DA (1996). "Generalized Simulated Annealing."
+        Physica A, 233, 395-406.
+    .. [3] Xiang Y, Sun DY, Fan W, Gong XG (1997). "Generalized Simulated
+        Annealing Algorithm and Its Application to the Thomson Model."
+        Physics Letters A, 233, 216-220.
+    .. [4] Xiang Y, Gong XG (2000a). "Efficiency of Generalized Simulated
+        Annealing." PHYSICAL REVIEW E, 62, 4473.
+    .. [5] Xiang Y, Gubian S, Suomela B, Hoeng (2013). "Generalized Simulated
+        Annealing for Efficient Global Optimization: the GenSA Package for
+        R". The R Journal, Volume 5/1, June 2013.
+        http://journal.r-project.org/.
+    .. [6] Mullen, K. (2014). Continuous Global Optimization in R. Journal of
+        Statistical Software, 60(6), 1 - 45.
+        http://dx.doi.org/10.18637/jss.v060.i06
+
+    Examples
+    --------
+    The following example is a 10-dimensional problem, with many local minima.
+    The function involved is called Rastrigin
+    (https://en.wikipedia.org/wiki/Rastrigin_function)
+
+    >>> from scipy.optimize import hygsa
+    >>> func = lambda x: np.sum(x * x - 10 * np.cos(
+    ...    2 * np.pi * x)) + 10 * np.size(x)
+    >>> lw = [-5.12] * 10
+    >>> up = [5.12] * 10
+    >>> ret = hygsa(func, None, bounds=(zip(lw, up)))
+    >>> print("global minimum: xmin = {0}, f(xmin) = {1}".format(
+    ...    ret.x, ret.fun))
+    """
+    gr = HyGSARunner(func, x0, bounds, args, seed,
+            temperature_start=initial_temp, qv = visit, qa = accept,
+            maxfun=maxfun, maxsteps=maxiter,pure_sa=pure_sa)
+    gr.search()
+    return gr.result
+
