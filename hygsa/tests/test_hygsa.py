@@ -78,7 +78,7 @@ class TestHyGSA(TestCase):
         assert_array_less(np.min(values), 1e-10)
         assert_array_less(1e+10, np.max(values))
 
-    def test_reset(self):
+    def test__reset(self):
         owf = ObjectiveFunWrapper(self.ld_bounds, self.weirdfunc)
         lu = list(zip(*self.ld_bounds))
         lower = np.array(lu[0])
@@ -90,11 +90,14 @@ class TestHyGSA(TestCase):
         ret = hygsa(self.func, None, self.hd_bounds)
         assert_allclose(ret.fun, 0., atol=1e-12)
 
-    def test__yygas(self):
-        gr = HyGSARunner(*(self.defautgr))
+    def test__gaussian(self):
+        lu = list(zip(*self.ld_bounds))
+        lower = np.array(lu[0])
+        upper = np.array(lu[1])
+        vd = VisitingDistribution(lower, upper, self.qv, self.rs)
         values = np.zeros(self.nbtestvalues)
         for i in np.arange(self.nbtestvalues):
-            values[i] = gr._yygas()
+            values[i] = vd.gaussian_fn(1)
         assert_almost_equal(np.mean(values), 0, 1)
         assert_almost_equal(np.median(values), 0, 1)
         assert_almost_equal(np.std(values), 1., 1)
