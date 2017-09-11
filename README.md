@@ -27,9 +27,8 @@ import numpy as np
 from hygsa import hygsa
 # Defining Rastring function as a test function
 func = lambda x: np.sum(x * x - 10 * np.cos(2 * np.pi * x)) + 10 * np.size(x)
-# Setting bounds
-lw = [-5.12] * 10
-up = [5.12] * 10
+# Setting bounds from -5.12 to 5.12 for all dimensions
+bounds = [(-5.12, 5.12)] * 10
 # Running the optimization computation
 ret = hygsa(func, None, bounds=(zip(lw, up)))
 # Showing results
