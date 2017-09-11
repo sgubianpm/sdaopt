@@ -30,7 +30,7 @@ func = lambda x: np.sum(x * x - 10 * np.cos(2 * np.pi * x)) + 10 * np.size(x)
 # Setting bounds from -5.12 to 5.12 for all dimensions
 bounds = [(-5.12, 5.12)] * 10
 # Running the optimization computation
-ret = hygsa(func, None, bounds=(zip(lw, up)))
+ret = hygsa(func, None, bounds=bounds)
 # Showing results
 print("global minimum: xmin = {0}, f(xmin) = {1}".format(ret.x, ret.fun))
 ```
