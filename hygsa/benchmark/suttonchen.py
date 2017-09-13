@@ -41,6 +41,7 @@ def sutton_chen(x):
 
 
 def test_sutton_chen():
+    np.random.seed(1)
     x_global = np.array([
         -0.2900181566, -0.2176381343, -0.2842129662,
         -0.4342237494, -0.1257555181, -0.9118061294,
@@ -53,10 +54,9 @@ def test_sutton_chen():
 
 def main():
     n_particles = 6
-    lw = [-0.7] * (3 * n_particles)
-    up = [0.7] * (3 * n_particles)
-    np.random.seed(123)
-    ret = hygsa(sutton_chen, None, bounds=(zip(lw, up)))
+    bounds = ([-0.7, 0.7]) * (3 * n_particles)
+    np.random.seed(1)
+    ret = hygsa(sutton_chen, None, bounds=bounds)
     # np.set_printoptions(precision=4)
     print('xmin =\n{}'.format(np.array2string(ret.x, max_line_width=40)))
     print("global minimum: f(xmin) = {}".format(ret.fun))
