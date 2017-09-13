@@ -282,7 +282,7 @@ class ObjectiveFunWrapper(object):
             self.ls_max_iter = 1000
 
         if 'maxiter' not in self.kwargs:
-            self.kwargs['maxiter'] = self._ls_max_iter
+            self.kwargs['maxiter'] = self.ls_max_iter
 
         if 'maxls' not in self.kwargs:
             self.kwargs['maxls'] = 100
