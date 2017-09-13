@@ -254,6 +254,11 @@ class ObjectiveFunWrapper(object):
         self.lower = np.array(lu[0])
         self.upper = np.array(lu[1])
         self.ls_max_iter = self.lower.size * 6
+        
+        if self.ls_max_iter < 100:
+            self.ls_max_iter = 100
+        if self.ls_max_iter > 1000:
+            self.ls_max_iter = 1000
 
         # By default, scipy L-BFGS-B is used with a custom 3 points gradient
         # computation
@@ -267,26 +272,24 @@ class ObjectiveFunWrapper(object):
             self.fun_args = self.kwargs.get('args')
         else:
             self.fun_args= ()
-        if 'factr' not in self.kwargs:
+        if 'options' not in self.kwargs:
+            self.kwargs['options'] = {
+                'disp': None, 'maxls': 100, 'iprint': -1, 'gtol': 1e-06,
+                'eps': 1e-06,
+                #'maxiter': self.ls_max_iter,
+                'maxiter': 15000,
+                'maxcor': 10, 'maxfun': 15000
+            }
+        else:
             self.kwargs['factr'] = 1000.
-        if 'gtol' not in self.kwargs:
             self.kwargs['gtol'] = 1.e-6
+            #  self.kwargs['maxiter'] = self.ls_max_iter
+            self.kwargs['maxiter'] = 15000 
+            self.kwargs['maxls'] = 100
         if 'eps' in self.kwargs:
             self.reps = self.kwargs.get('eps')
         else:
             self.reps = 1.e-6
-
-        if self.ls_max_iter < 100:
-            self.ls_max_iter = 100
-        if self.ls_max_iter > 1000:
-            self.ls_max_iter = 1000
-
-        if 'maxiter' not in self.kwargs:
-            self.kwargs['maxiter'] = self.ls_max_iter
-
-        if 'maxls' not in self.kwargs:
-            self.kwargs['maxls'] = 100
-
 
     def func_wrapper(self, x):
         self.nb_fun_call += 1
