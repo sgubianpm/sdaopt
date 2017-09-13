@@ -315,7 +315,6 @@ class ObjectiveFunWrapper(object):
         return g
 
     def local_search(self, x, maxlsiter=None):
-        if 
         mres = self.minimizer(self.func_wrapper, x, **self.kwargs)
         if not mres.success:
             return BIG_VALUE, None
