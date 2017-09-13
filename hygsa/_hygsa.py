@@ -121,19 +121,15 @@ class EnergyState():
         return self.__str__
 
     def reset(self, owf, rs, x0=None):
-        owf.nb_fun_call = 0
         if x0 is None:
             self.current_location  = self.lower + rs.random_sample(
                 len(self.lower)) * (self.upper - self.lower)
         else:
             self.current_location = np.copy(x0)
-        self.xbest = np.copy(self.current_location)
         init_error = True
         reinit_counter = 0
         while init_error:
             self.current_energy = owf.func(self.current_location)
-            self.ebest = self.current_energy
-            self.xbest = np.copy(self.current_location)
             if (self.current_energy >= BIG_VALUE or
                     np.isnan(self.current_energy)):
                 if reinit_counter >= self.MAX_REINIT_COUNT:
@@ -146,10 +142,15 @@ class EnergyState():
                     raise ValueError(message)
                 self.current_location = self.lower + rs.random_sample(
                     self.lower.size) * (self.upper - self.lower)
-                self.xbest = np.copy(self.current_location)
                 reinit_counter += 1
             else:
                 init_error = False
+            # If first time reset, initialize ebest and xbest
+            if self.ebest is None and self.xbest is None:
+                self.ebest = self.current_energy
+                self.xbest = np.copy(self.current_location)
+            # Otherwise, keep them in case of reannealing reset
+
 
 
 class MarkovChain(object):
@@ -252,6 +253,7 @@ class ObjectiveFunWrapper(object):
         lu = list(zip(*bounds))
         self.lower = np.array(lu[0])
         self.upper = np.array(lu[1])
+        self.ls_max_iter = self.lower.size * 6
 
         # By default, scipy L-BFGS-B is used with a custom 3 points gradient
         # computation
@@ -265,10 +267,26 @@ class ObjectiveFunWrapper(object):
             self.fun_args = self.kwargs.get('args')
         else:
             self.fun_args= ()
-        if 'reps' in self.kwargs:
-            self.reps = self.kwargs.get('reps')
+        if 'factr' not in self.kwargs:
+            self.kwargs['factr'] = 1000.
+        if 'gtol' not in self.kwargs:
+            self.kwargs['gtol'] = 1.e-6
+        if 'eps' in self.kwargs:
+            self.reps = self.kwargs.get('eps')
         else:
-            self.reps = 1.e-6 
+            self.reps = 1.e-6
+
+        if self.ls_max_iter < 100:
+            self.ls_max_iter = 100
+        if self.ls_max_iter > 1000:
+            self.ls_max_iter = 1000
+
+        if 'maxiter' not in self.kwargs:
+            self.kwargs['maxiter'] = self._ls_max_iter
+
+        if 'maxls' not in self.kwargs:
+            self.kwargs['maxls'] = 100
+
 
     def func_wrapper(self, x):
         self.nb_fun_call += 1
@@ -296,7 +314,8 @@ class ObjectiveFunWrapper(object):
         g[idx] = 101.0
         return g
 
-    def local_search(self, x):
+    def local_search(self, x, maxlsiter=None):
+        if 
         mres = self.minimizer(self.func_wrapper, x, **self.kwargs)
         if not mres.success:
             return BIG_VALUE, None
