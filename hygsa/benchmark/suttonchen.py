@@ -54,7 +54,7 @@ def test_sutton_chen():
 
 def main():
     n_particles = 6
-    bounds = ([-0.7, 0.7]) * (3 * n_particles)
+    bounds = [(-0.7, 0.7)] * (3 * n_particles)
     np.random.seed(1)
     ret = hygsa(sutton_chen, None, bounds=bounds)
     # np.set_printoptions(precision=4)
