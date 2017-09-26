@@ -23,6 +23,7 @@ try:
 except:
     from hygsa import hygsa
 from pyswarm import pso
+import cma
 import hygsa.benchmark.go_benchmark_functions as gbf
 from .job import Job
 from .benchunit import BenchUnit
@@ -81,9 +82,10 @@ class MyBounds(object):
 class Benchmarker(object):
     def __init__(self, nbruns, folder):
         self.algorithms = [
-            HyGSAOptimizer(), BHOptimizer(), DEOptimizer(),
-            DERestartOptimizer(), PSOptimizer(), PSORestartOptimizer(),
-            BFOptimizer(), BHRestartOptimizer(),
+            #HyGSAOptimizer(), BHOptimizer(), DEOptimizer(),
+            #DERestartOptimizer(), PSOptimizer(), PSORestartOptimizer(),
+            #BFOptimizer(), BHRestartOptimizer(),
+            CMAOptimizer(), CMARestartOptimizer(),
         ]
         self.nbruns = nbruns
         self.folder = folder
@@ -478,3 +480,42 @@ class BFOptimizer(Algo):
             self._funcwrapped,
             [x for x in zip(self._lower, self._upper)], )
 
+
+class CMAOptimizer(Algo):
+    def __init__(self):
+        Algo.__init__(self)
+        self.name = 'CMA'
+        self.es = None
+
+    def optimize(self):
+        if self._nbcall == 0:
+            self.es = cma.CMAEvolutionStrategy(
+                self._xinit,
+                0.5,
+                {
+                    'maxiter': MAX_IT,
+                    'bounds': [self._lower, self._upper],
+                },
+            )
+        with nostdout():
+            res = self.es.optimize(self._funcwrapped)
+
+
+class CMARestartOptimizer(Algo):
+    def __init__(self):
+        Algo.__init__(self)
+        self.name = 'CMA-R'
+        self.es = None
+
+    def optimize(self):
+        while(self._nbcall < MAX_FN_CALL):
+            self.es = cma.CMAEvolutionStrategy(
+                self._xinit,
+                0.5,
+                {
+                    'maxiter': 1e6,
+                    'bounds': [self._lower, self._upper],
+                },
+            )
+            with nostdout():
+                res = self.es.optimize(self._funcwrapped)
