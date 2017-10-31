@@ -24,6 +24,7 @@ except:
     from hygsa import hygsa
 from pyswarm import pso
 import cma
+import nlopt
 import hygsa.benchmark.go_benchmark_functions as gbf
 from .job import Job
 from .benchunit import BenchUnit
@@ -85,7 +86,8 @@ class Benchmarker(object):
             #HyGSAOptimizer(), BHOptimizer(), DEOptimizer(),
             #DERestartOptimizer(), PSOptimizer(), PSORestartOptimizer(),
             #BFOptimizer(), BHRestartOptimizer(),
-            CMAOptimizer(), CMARestartOptimizer(),
+            #CMAOptimizer(), CMARestartOptimizer(),
+            NLOptimizer(nlopt.GD_STOGO),
         ]
         self.nbruns = nbruns
         self.folder = folder
@@ -488,15 +490,14 @@ class CMAOptimizer(Algo):
         self.es = None
 
     def optimize(self):
-        if self._nbcall == 0:
-            self.es = cma.CMAEvolutionStrategy(
-                self._xinit,
-                0.5,
-                {
-                    'maxiter': MAX_IT,
-                    'bounds': [self._lower, self._upper],
-                },
-            )
+        self.es = cma.CMAEvolutionStrategy(
+            self._xinit,
+            0.5,
+            {
+                'maxiter': MAX_IT,
+                'bounds': [self._lower, self._upper],
+            },
+        )
         with nostdout():
             res = self.es.optimize(self._funcwrapped)
 
@@ -519,3 +520,18 @@ class CMARestartOptimizer(Algo):
             )
             with nostdout():
                 res = self.es.optimize(self._funcwrapped)
+
+class NLOptimizer(Algo):
+    def __init__(self, nlopt_algo):
+        Algo.__init__(self)
+        self.nlopt_algo = nlopt_algo
+        self.opt = nlopt.opt(self.nlopt_algo, 2)
+        self.name = self.opt.get_algorithm_name().split()[0]
+
+    def optimize(self):
+        self.opt = nlopt.opt(self.nlopt_algo, self._k.N)
+        self.opt.set_min_objective(self._funcwrapped)
+        self.opt.set_lower_bounds(self._lower)
+        self.opt.set_upper_bounds(self._upper)
+        with nostdout():
+            res = self.opt.optimize(self._xinit)
