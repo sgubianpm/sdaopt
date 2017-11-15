@@ -535,3 +535,23 @@ class NLOptimizer(Algo):
         self.opt.set_upper_bounds(self._upper)
         with nostdout():
             res = self.opt.optimize(self._xinit)
+
+def which_fglob_centered():
+    bench_members = inspect.getmembers(gbf, inspect.isclass)
+    benchmark_functions = [item for item in bench_members if
+                           issubclass(item[1], gbf.Benchmark)]
+    funcs = []
+    for name, klass in benchmark_functions:
+        if name == 'Benchmark':
+            continue
+        try:
+            k = klass()
+        except TypeError:
+            k = klass(dimensions=2)
+        lower = np.array([x[0] for x in k._bounds])
+        upper = np.array([x[1] for x in k._bounds])
+        m = 0.5 * np.add(lower, upper)
+        if np.all(m == k.global_optimum):
+            funcs.append(name)
+            print(name)
+

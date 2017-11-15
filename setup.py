@@ -12,12 +12,14 @@ requires = [
     'pytest',
     #'pyswarm',
     #'matplotlib',
-    #  'fastcluster',
+    #'fastcluster',
+    #'nlopt',
+    #'cmaes',
     ]
 
 setup(
         name='hygsa',
-        version='0.0.3',
+        version='0.0.4',
         description='Hybrid General Simulated Annealing and benchmark',
         long_description=README + '\n\n' +  CHANGES,
         classifiers=[
@@ -35,7 +37,10 @@ setup(
         include_package_data=True,
         entry_points = {
             'console_scripts':
-            ['hygsa_bench=hygsa.benchmark.workflow:run_all_bench'],
+            [
+                'hygsa_bench=hygsa.benchmark.workflow:run_all_bench',
+                'hygsa_which_glob=hygsa.benchmark.bench:which_fglob_centered',
+            ],
         },
         zip_safe=False,
         install_requires=requires,

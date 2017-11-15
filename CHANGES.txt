@@ -1,9 +1,11 @@
 0.0.1
 -----
+
 Initial Python implementation
 
 0.0.2
 -----
+
 - Fixed bounds issue for Python3
 - Restructured project folder for benchmark
 - Improved setup.py with entry points
@@ -12,7 +14,13 @@ Initial Python implementation
 
 0.0.3
 -----
+
 - Improved implementation and border effect risk by breaking algorithm in modular pieces 
 - Generic minimizer used instead of calling L-BFGS-B with custom gradient
 - Fresh re-annealing implementation
+
+0.0.4
+-----
+- Added function for counting the number of testing function having the global
+  minimum location centered on the bounds
 
