@@ -26,9 +26,10 @@ python setup.py install
 import numpy as np
 from datetime import datetime
 from sdaopt import sda
-# Defining a modified Rastring function with dimension 30
-func = lambda x: np.sum((x - 3.14159) ** 2 - 10 * np.cos(2 * np.pi * (x - 3.14159))) + 10 * np.size(x)
-# Setting bounds from -5.12 to 5.12 for all dimensions
+# Defining a modified Rastring function with dimension 30 shifted by 3.14159
+shift = 3.14159
+func = lambda x: np.sum((x - shift) ** 2 - 10 * np.cos(2 * np.pi * (x - shift))) + 10 * np.size(x)
+# Setting bounds from -5.12 to 10.24 for all dimensions
 bounds = [(-5.12, 10.24)] * 30
 # Running the optimization computation
 t_start = datetime.now()
