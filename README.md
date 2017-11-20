@@ -1,6 +1,6 @@
-# HyGSA (improved old PyGenSA)
+# SDAopt (improved old PyGenSA/HyGSA)
 
-Hybrid Generalized simmulated annealing global optimization algorithm implementation and extensive benchmark. **Testing functions** used in the benchmark (except suttonchen) have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project.
+Simmulated Dual Annealing global optimization algorithm implementation and extensive benchmark. **Testing functions** used in the benchmark (except suttonchen) have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project.
 
 Results of the benchmarks are available at:
 https://gist.github.com/sgubianpm/7d55f8d3ba5c9de4e9f0f1ffff1aa6cf
@@ -15,8 +15,8 @@ https://github.com/scipy/scipy/pull/6569
 ## Installation from source
 
 ```bash
-git clone https://github.com/sgubianpm/HyGSA.git
-cd HyGSA
+git clone https://github.com/sgubianpm/sdaopt.git
+cd sdaopt
 # Activate your appropriate python virtual environment if needed
 python setup.py install
 ```
@@ -24,13 +24,13 @@ python setup.py install
 ## How to use it
 ```python
 import numpy as np
-from hygsa import hygsa
+from sdaopt import sda
 # Defining Rastring function as a test function
 func = lambda x: np.sum(x * x - 10 * np.cos(2 * np.pi * x)) + 10 * np.size(x)
 # Setting bounds from -5.12 to 5.12 for all dimensions
 bounds = [(-5.12, 5.12)] * 10
 # Running the optimization computation
-ret = hygsa(func, None, bounds=bounds)
+ret = sda(func, None, bounds=bounds)
 # Showing results
 print("global minimum: xmin = {0}, f(xmin) = {1}".format(ret.x, ret.fun))
 ```
@@ -42,7 +42,7 @@ print("global minimum: xmin = {0}, f(xmin) = {1}".format(ret.x, ret.fun))
 # Replace NB_RUNS by your values (default value is 100)
 # NB_RUNS is the number of runs done for each testing function and algorithm used
 # The script uses all available cores on the machine.
-hygsa_bench --nb-runs NB_RUNS
+sdaopt_bench --nb-runs NB_RUNS
 ```
 
 ## Running benchmark on a cluster (Example for Moab/TORQUE)
@@ -53,14 +53,14 @@ Below a script content example for Maob/TORQUE:
 ```bash
 #!/bin/bash
 # Replace OUTPUT_FOLDER by your the path of your choice
-# Adjust YOUR_PYTHON_VIRTUAL_ENV and YOUR_PYHGSA_GIT_FOLDER
+# Adjust YOUR_PYTHON_VIRTUAL_ENV and YOUR_SDAOPT_GIT_FOLDER
 ##### These lines are for Moab
 #MSUB -l procs=16
 #MSUB -q long
 #MSUB -o OUTPUT_FOLDER/bench.out
 #MSUB -e OUTPUT_FOLDER/bench.err
 source YOUR_PYTHON_VIRTUAL_ENV/bin/activate 
-hygsa_bench --nb-runs 100 --output-folder OUTPUT_FOLDER 
+sda_bench --nb-runs 100 --output-folder OUTPUT_FOLDER 
 ```
 On your machine that is able to submit jobs to the cluster
 ```bash
