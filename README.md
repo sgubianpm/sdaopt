@@ -29,13 +29,13 @@ from sdaopt import sda
 # Defining a modified Rastring function with dimension 40
 func = lambda x: np.sum((x - 3.14159) ** 2 - 10 * np.cos(2 * np.pi * (x - 3.14159))) + 10 * np.size(x)
 # Setting bounds from -5.12 to 5.12 for all dimensions
-bounds = [(-5.12, 10.24)] * 40
+bounds = [(-5.12, 10.24)] * 30
 # Running the optimization computation
 t_start = datetime.now()
 ret = sda(func, None, bounds=bounds)
 t_end = datetime.now()
 # Showing results
-print("global minimum: xmin = {0}, f(xmin) = {1}, time: {2} seconds".format(
+print("global minimum: xmin =\n{0}\nf(xmin) = {1}\ntime: {2} seconds".format(
     ret.x, ret.fun, (t_end - t_start).total_seconds()))
 ```
 
