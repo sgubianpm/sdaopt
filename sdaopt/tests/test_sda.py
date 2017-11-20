@@ -11,11 +11,11 @@
 """
 Unit tests for the Hybrid Generalized Simulated Annealing global optimizer
 """
-from hygsa import hygsa
-from hygsa import VisitingDistribution
-from hygsa import HyGSARunner
-from hygsa import ObjectiveFunWrapper
-from hygsa import EnergyState
+from sdaopt import sda
+from sdaopt import VisitingDistribution
+from sdaopt import SDARunner
+from sdaopt import ObjectiveFunWrapper
+from sdaopt import EnergyState
 import numpy as np
 from numpy.testing import (assert_equal, TestCase, assert_allclose,
                            assert_almost_equal, assert_raises,
@@ -23,7 +23,7 @@ from numpy.testing import (assert_equal, TestCase, assert_allclose,
 from scipy._lib._util import check_random_state
 
 
-class TestHyGSA(TestCase):
+class TestSDA(TestCase):
 
     def setUp(self):
         # Using Rastrigin function for performing tests
@@ -45,7 +45,7 @@ class TestHyGSA(TestCase):
         pass
 
     def test_low_dim(self):
-        ret = hygsa(self.func, None, self.ld_bounds, seed=self.seed)
+        ret = sda(self.func, None, self.ld_bounds, seed=self.seed)
         assert_allclose(ret.fun, 0., atol=1e-12)
 
     def test__visiting_stepping(self):
@@ -87,7 +87,7 @@ class TestHyGSA(TestCase):
         assert_raises(ValueError, es.reset, *(owf, check_random_state(None)))
 
     def test_high_dim(self):
-        ret = hygsa(self.func, None, self.hd_bounds)
+        ret = sda(self.func, None, self.hd_bounds)
         assert_allclose(ret.fun, 0., atol=1e-12)
 
     def test__gaussian(self):
@@ -103,14 +103,14 @@ class TestHyGSA(TestCase):
         assert_almost_equal(np.std(values), 1., 1)
 
     def test_max_reinit(self):
-        assert_raises(ValueError, hygsa, *(self.weirdfunc, None,
+        assert_raises(ValueError, sda, *(self.weirdfunc, None,
                                            self.ld_bounds))
 
     def test_reproduce(self):
         seed = 1234
-        res1 = hygsa(self.func, None, self.ld_bounds, seed=seed)
-        res2 = hygsa(self.func, None, self.ld_bounds, seed=seed)
-        res3 = hygsa(self.func, None, self.ld_bounds, seed=seed)
+        res1 = sda(self.func, None, self.ld_bounds, seed=seed)
+        res2 = sda(self.func, None, self.ld_bounds, seed=seed)
+        res3 = sda(self.func, None, self.ld_bounds, seed=seed)
         # If we have reproducible results, x components found has to
         # be exactly the same, which is not the case with no seeding
         assert_equal(res1.x, res2.x)
@@ -118,4 +118,4 @@ class TestHyGSA(TestCase):
 
     def test_bounds_integrity(self):
         wrong_bounds = [(-5.12, 5.12), (1, 0), (5.12, 5.12)]
-        assert_raises(ValueError, hygsa, *(self.func, None, wrong_bounds))
+        assert_raises(ValueError, sda, *(self.func, None, wrong_bounds))

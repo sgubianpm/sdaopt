@@ -71,13 +71,11 @@ suc.ANFC <- data.frame(`Testing Function` = suc.rate.tab$"Testing Function",
 tmp <- formatC(colMeans(suc.rate.tab[, -1]), digits = 3)
 cat("The mean of success rate is: \n")
 print(paste(names(tmp), paste(tmp, "%", sep = ""), sep = ": ", collapse = "; "))
-#[1] "BF:   36%; BH: 62.2%; DE: 72.6%; DE-R: 86.5%; PSO: 35.9%; PSO-R: 68.8%; HyGSA: 93.4%"
 
 
 tmp <- formatC(apply(ANFC.tab[, -1], 2, function(x) {median(x[!is.na(x)])}), digits = 1, format = "f")
 cat("The median of success rate is: \n")
 print(paste(names(tmp), paste(tmp, sep = ""), sep = ": ", collapse = "; "))
-#[1] "BF: Inf; BH: 867.5; DE: 1197.2; DE-R: 1663.2; PSO: 3718.5; PSO-R:13355.2; HyGSA: 1076.3"
 
 # Output Figure 1.
 message(paste0('Generating heatmap figure Figure_1_successRate.pdf to folder: ', output.path))

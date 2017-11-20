@@ -70,7 +70,7 @@ def run_all_bench():
     r_script_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__),
         'scripts',
-        'HyGSA.R'))
+        'SDA.R'))
     cmd = [
         'R', 'CMD', 'BATCH',
         r_script_path,

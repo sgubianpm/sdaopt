@@ -18,9 +18,9 @@ requires = [
     ]
 
 setup(
-        name='hygsa',
-        version='0.0.4',
-        description='Hybrid General Simulated Annealing and benchmark',
+        name='sdaopt',
+        version='0.0.5',
+        description='Simulated Dual Annealing and benchmark',
         long_description=README + '\n\n' +  CHANGES,
         classifiers=[
             "Programming Language :: Python",
@@ -31,15 +31,15 @@ setup(
           ],
         author='Sylvain Gubian, PMP SA',
         author_email='sylvain.gubian@pmi.com',
-        url='https://github.com/sgubianpm/HyGSA',
+        url='https://github.com/sgubianpm/sdaopt',
         keywords='optimization benchmarking simulated annealing',
         packages=find_packages(),
         include_package_data=True,
         entry_points = {
             'console_scripts':
             [
-                'hygsa_bench=hygsa.benchmark.workflow:run_all_bench',
-                'hygsa_which_glob=hygsa.benchmark.bench:which_fglob_centered',
+                'sda_bench=sdaopt.benchmark.workflow:run_all_bench',
+                'sda_which_glob=sdaopt.benchmark.bench:which_fglob_centered',
             ],
         },
         zip_safe=False,

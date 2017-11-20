@@ -5,9 +5,9 @@
 import numpy as np
 import numpy.testing as npt
 try:
-    from scipy.optimize import hygsa
+    from scipy.optimize import sda
 except:
-    from hygsa import hygsa
+    from sdaopt import sda
 __author__ = "Sylvain Gubian"
 __copyright__ = "Copyright 2016, PMP SA"
 __license__ = "GPL2.0"
@@ -56,7 +56,7 @@ def main():
     n_particles = 6
     bounds = [(-0.7, 0.7)] * (3 * n_particles)
     np.random.seed(1)
-    ret = hygsa(sutton_chen, None, bounds=bounds)
+    ret = sda(sutton_chen, None, bounds=bounds)
     # np.set_printoptions(precision=4)
     print('xmin =\n{}'.format(np.array2string(ret.x, max_line_width=40)))
     print("global minimum: f(xmin) = {}".format(ret.fun))

@@ -17,15 +17,15 @@ from scipy.optimize import differential_evolution
 from scipy.optimize import brute 
 from scipy.optimize import minimize
 try:
-# If hygsa is available in SciPy (maybe in the future)
-    from scipy.optimize import hygsa
-# Otherwise use the module hygsa implementation
+# If sda is available in SciPy (maybe in the future)
+    from scipy.optimize import sda
+# Otherwise use the module sdaopt implementation
 except:
-    from hygsa import hygsa
+    from sdaopt import sda
 from pyswarm import pso
 import cma
 import nlopt
-import hygsa.benchmark.go_benchmark_functions as gbf
+import sdaopt.benchmark.go_benchmark_functions as gbf
 from .job import Job
 from .benchunit import BenchUnit
 
@@ -83,7 +83,7 @@ class MyBounds(object):
 class Benchmarker(object):
     def __init__(self, nbruns, folder):
         self.algorithms = [
-            #HyGSAOptimizer(), BHOptimizer(), DEOptimizer(),
+            #SDAOptimizer(), BHOptimizer(), DEOptimizer(),
             #DERestartOptimizer(), PSOptimizer(), PSORestartOptimizer(),
             #BFOptimizer(), BHRestartOptimizer(),
             #CMAOptimizer(), CMARestartOptimizer(),
@@ -319,14 +319,14 @@ class Algo(object):
             raise OptimumFoundException('FOUND')
         return res
 
-class HyGSAOptimizer(Algo):
+class SDAOptimizer(Algo):
     def __init__(self):
         Algo.__init__(self)
-        self.name = 'HyGSA'
+        self.name = 'SDA'
 
     def optimize(self):
         Algo.optimize(self)
-        hygsa(
+        sda(
             func=self._funcwrapped, x0=None,
             bounds=list(zip(self._lower, self._upper)), maxiter=MAX_IT,
             pure_sa=False)

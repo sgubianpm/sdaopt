@@ -3,7 +3,7 @@
 # Yang Xiang <yang.xiang@pmi.com>
 # Author: Sylvain Gubian, PMP S.A.
 """
-hygsa: An Hybrid Generalized Simulated Annealing global optimization algorithm
+SDA: A Simulated Dual Annealing global optimization algorithm
 """
 from __future__ import division, print_function, absolute_import
 
@@ -13,7 +13,7 @@ from scipy.optimize import minimize
 from scipy.special import gammaln
 from scipy._lib._util import check_random_state
 
-__all__ = ['hygsa']
+__all__ = ['sda']
 BIG_VALUE = 1e16
 
 class VisitingDistribution(object):
@@ -324,7 +324,7 @@ class ObjectiveFunWrapper(object):
         return (mres.fun, mres.x)
 
 
-class HyGSARunner(object):
+class SDARunner(object):
     MAX_REINIT_COUNT = 1000
 
     def __init__(self, fun, x0, bounds, minimizer_kwargs=None,
@@ -397,11 +397,11 @@ class HyGSARunner(object):
         return res
 
 
-def hygsa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
+def sda(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
         accept=-5.0, maxfun=1e7, args=None, seed=None, pure_sa=False):
     """
-    Find the global minimum of a function using the Generalized Simulated
-    Annealing algorithm
+    Find the global minimum of a function using the Simulated Dual Annealing
+    algorithm
 
     Parameters
     ----------
@@ -419,10 +419,10 @@ def hygsa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
         `func`. It is required to have ``len(bounds) == len(x)``.
         ``len(bounds)`` is used to determine the number of parameters in ``x``.
     maxiter : int, optional
-        The maximum number of hygsa iterations
+        The maximum number of sda iterations
     initial_temp : float, optional
         The initial temperature, use higher values to facilitates a wider
-        search of the energy landscape, allowing hygsa to escape local minima
+        search of the energy landscape, allowing sda to escape local minima
         that it is trapped in.
     visit : float, optional
         Parameter for visiting distribution. Higher values give the visiting
@@ -461,13 +461,10 @@ def hygsa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
 
     Notes
     -----
-    HyGSA is an implementation of the Hybrid General Simulated Annealing
-    algorithm (GSA [2]_). This stochastic approach generalizes CSA (Classical
-    Simulated Annealing) and FSA (Fast Simulated Annealing) to find the
-    neighborhood of minima, then calls a local method (lbfgsb) to find their
-    exact value. HyGSA can process complicated and high dimension non-linear
-    objective functions with a large number of local minima as
-    described by [6]_.
+    SDA is an implementation of the Simulated Dual Annealing. This stochastic
+    approach generalizes CSA [2]_ (Classical Simulated Annealing) and FSA (Fast
+    Simulated Annealing) to find the neighborhood of minima and introduces an
+    additional annealing process for the best solution found.
 
     GSA uses a distorted Cauchy-Lorentz visiting distribution, with its shape
     controlled by the parameter :math:`q_{v}`
@@ -535,16 +532,16 @@ def hygsa(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
     The function involved is called Rastrigin
     (https://en.wikipedia.org/wiki/Rastrigin_function)
 
-    >>> from scipy.optimize import hygsa
+    >>> from scipy.optimize import sda
     >>> func = lambda x: np.sum(x * x - 10 * np.cos(
     ...    2 * np.pi * x)) + 10 * np.size(x)
     >>> lw = [-5.12] * 10
     >>> up = [5.12] * 10
-    >>> ret = hygsa(func, None, bounds=(zip(lw, up)))
+    >>> ret = sda(func, None, bounds=(zip(lw, up)))
     >>> print("global minimum: xmin = {0}, f(xmin) = {1}".format(
     ...    ret.x, ret.fun))
     """
-    gr = HyGSARunner(func, x0, bounds, args, seed,
+    gr = SDARunner(func, x0, bounds, args, seed,
             temperature_start=initial_temp, qv = visit, qa = accept,
             maxfun=maxfun, maxsteps=maxiter,pure_sa=pure_sa)
     gr.search()

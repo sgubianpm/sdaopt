@@ -51,10 +51,10 @@ def benchmark(methods, nbruns, deltas, output_dir):
             (method + '.rda')))
 
 def main():
-    parser = argparse.ArgumentParser(description='HyGSA comparison runner')
+    parser = argparse.ArgumentParser(description='GenSA comparison runner')
     parser.add_argument('--methods', dest='methods', action='store',
-            default="HyGSA,rgenoud,DEoptim_BFGS", type=csv,
-            help='List of method to use in: HyGSA, DEoptim, DEoptim_LBFGS')
+            default="GenSA,rgenoud,DEoptim_BFGS", type=csv,
+            help='List of method to use in: GenSA, DEoptim, DEoptim_LBFGS')
     parser.add_argument('--nbruns', dest='nbruns', action='store',
             default=2, help='Number of runs')
     parser.add_argument('--deltas', dest='deltas', action='store',
