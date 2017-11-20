@@ -25,10 +25,10 @@ python setup.py install
 ```python
 import numpy as np
 from sdaopt import sda
-# Defining Rastring function as a test function
-func = lambda x: np.sum(x * x - 10 * np.cos(2 * np.pi * x)) + 10 * np.size(x)
+# Defining Rastring function with dimension 40
+func = lambda x: np.sum((x - 3.14159) ** 2 - 10 * np.cos(2 * np.pi * (x - 3.14159)) + 10 * np.size(x)
 # Setting bounds from -5.12 to 5.12 for all dimensions
-bounds = [(-5.12, 5.12)] * 10
+bounds = [(-5.12, 10.24)] * 40
 # Running the optimization computation
 ret = sda(func, None, bounds=bounds)
 # Showing results
