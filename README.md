@@ -1,6 +1,6 @@
 # SDAopt
 
-Simmulated Dual Annealing global optimization algorithm implementation and extensive benchmark. **Testing functions** used in the benchmark (except suttonchen) have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project. (Refactoring and improvment of the old improved old PyGenSA/HyGSA)
+Simmulated Dual Annealing global optimization algorithm implementation and extensive benchmark. **Testing functions** used in the benchmark (except suttonchen) have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project. (Refactoring and improvement of the old PyGenSA/HyGSA implementations)
 
 Results of the benchmarks are available at:
 https://gist.github.com/sgubianpm/7d55f8d3ba5c9de4e9f0f1ffff1aa6cf
@@ -24,15 +24,20 @@ python setup.py install
 ## How to use it
 ```python
 import numpy as np
+from datetime import datetime
 from sdaopt import sda
-# Defining Rastring function as a test function
-func = lambda x: np.sum(x * x - 10 * np.cos(2 * np.pi * x)) + 10 * np.size(x)
-# Setting bounds from -5.12 to 5.12 for all dimensions
-bounds = [(-5.12, 5.12)] * 10
+# Defining a modified Rastring function with dimension 30 shifted by 3.14159
+shift = 3.14159
+func = lambda x: np.sum((x - shift) ** 2 - 10 * np.cos(2 * np.pi * (x - shift))) + 10 * np.size(x)
+# Setting bounds from -5.12 to 10.24 for all dimensions
+bounds = [(-5.12, 10.24)] * 30
 # Running the optimization computation
+t_start = datetime.now()
 ret = sda(func, None, bounds=bounds)
+t_end = datetime.now()
 # Showing results
-print("global minimum: xmin = {0}, f(xmin) = {1}".format(ret.x, ret.fun))
+print("global minimum: xmin =\n{0}\nf(xmin) = {1}\ntime: {2} seconds".format(
+    ret.x, ret.fun, (t_end - t_start).total_seconds()))
 ```
 
 ## Running benchmark on a multicore machine
