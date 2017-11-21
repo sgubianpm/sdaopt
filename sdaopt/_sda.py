@@ -130,9 +130,11 @@ class EnergyState():
         reinit_counter = 0
         while init_error:
             self.current_energy = owf.func(self.current_location)
+            if self.current_energy is None:
+                raise ValueError('Objective function is returning None')
             if (self.current_energy >= BIG_VALUE or
                     np.isnan(self.current_energy)):
-                if reinit_counter >= self.MAX_REINIT_COUNT:
+                if reinit_counter >= EnergyState.MAX_REINIT_COUNT:
                     init_error = False
                     message = (
                         'Stopping algorithm because function '
@@ -348,7 +350,7 @@ class SDARunner(object):
         self.es = EnergyState(lower, upper) 
         self.es.reset(self.owf, self.rs, x0)
         # Maximum number of function call that can be used a stopping criterion
-        self.maxfuncall = maxfun
+        self.maxfun = maxfun
         # Maximum number of step (main iteration)  that can be used as
         # stopping criterion
         self.maxsteps = maxsteps
@@ -383,8 +385,12 @@ class SDARunner(object):
                     break
                 # starting Markov chain
                 self.mc.run(i, temperature)
+                if self.owf.nb_fun_call >= self.maxfun:
+                    break
                 if not self.pure_sa:
                     self.mc.local_search()
+                    if self.owf.nb_fun_call >= self.maxfun:
+                        break
 
     @property
     def result(self):
@@ -419,7 +425,8 @@ def sda(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
         `func`. It is required to have ``len(bounds) == len(x)``.
         ``len(bounds)`` is used to determine the number of parameters in ``x``.
     maxiter : int, optional
-        The maximum number of sda iterations
+        The maximum number of sda iterations. Increase this value if the
+        objective function is very complicated with high dimensions.
     initial_temp : float, optional
         The initial temperature, use higher values to facilitates a wider
         search of the energy landscape, allowing sda to escape local minima

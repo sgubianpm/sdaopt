@@ -24,7 +24,8 @@ except:
     from sdaopt import sda
 from pyswarm import pso
 import cma
-import nlopt
+# nlop is a bit tricky to install, disabling by default
+#import nlopt
 import sdaopt.benchmark.go_benchmark_functions as gbf
 from .job import Job
 from .benchunit import BenchUnit
@@ -83,11 +84,11 @@ class MyBounds(object):
 class Benchmarker(object):
     def __init__(self, nbruns, folder):
         self.algorithms = [
-            #SDAOptimizer(), BHOptimizer(), DEOptimizer(),
+            SDAOptimizer(), BHOptimizer(), DEOptimizer(),
             #DERestartOptimizer(), PSOptimizer(), PSORestartOptimizer(),
             #BFOptimizer(), BHRestartOptimizer(),
             #CMAOptimizer(), CMARestartOptimizer(),
-            NLOptimizer(nlopt.GD_STOGO),
+            #NLOptimizer(nlopt.GD_STOGO),
         ]
         self.nbruns = nbruns
         self.folder = folder
