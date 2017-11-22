@@ -403,7 +403,7 @@ class SDARunner(object):
         return res
 
 
-def sda(func, x0, bounds, maxiter=500, initial_temp=5230., visit=2.62,
+def sda(func, x0, bounds, maxiter=1000, initial_temp=5230., visit=2.62,
         accept=-5.0, maxfun=1e7, args=None, seed=None, pure_sa=False):
     """
     Find the global minimum of a function using the Simulated Dual Annealing
