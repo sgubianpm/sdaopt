@@ -44,6 +44,8 @@ from sdaopt import sda
 
 global nb_call
 nb_call = 0
+global glob_reached
+global_reached = False
 np.random.seed(1234)
 dimension = 30
 # Setting assymetric lower and upper bounds
@@ -57,8 +59,11 @@ x_init = lower + np.random.rand(dimension) * (upper - lower)
 def modified_rastrigin(x):
     shift = 3.14159
     global nb_call
+    global global_reached
     res = np.sum((x - shift) ** 2 - 10 * np.cos(2 * np.pi * (x - shift))) + 10 * np.size(x)
-    if res > 1e-8:
+    if res <= 1e-8:
+        global_reached = True
+    if not global_reached:
         nb_call += 1
     return(res)
 
