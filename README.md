@@ -1,6 +1,8 @@
 # SDAopt
 
-Simmulated Dual Annealing global optimization algorithm implementation and extensive benchmark. **Testing functions** used in the benchmark (except suttonchen) have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project. (Refactoring and improvement of the old PyGenSA/HyGSA implementations)
+Simmulated Dual Annealing global optimization algorithm implementation and extensive benchmark. This version is a refactoring and improvements of the old PyGenSA/HyGSA implementations.
+
+**Testing functions** used in the benchmark (except suttonchen) have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project.
 
 Results of the benchmarks are available at:
 https://gist.github.com/sgubianpm/7d55f8d3ba5c9de4e9f0f1ffff1aa6cf
