@@ -32,7 +32,7 @@ def rosenbrock(x):
 
 ret = sda(rosenbrock, None, [(-30, 30)] * 2)
 
-print("global minimum: xmin = {0} f(xmin) = {1}".format(
+print("global minimum:\nxmin = {0}\nf(xmin) = {1}".format(
     ret.x, ret.fun))
 ```
 
@@ -60,7 +60,8 @@ def modified_rastrigin(x):
     shift = 3.14159
     global nb_call
     global global_reached
-    res = np.sum((x - shift) ** 2 - 10 * np.cos(2 * np.pi * (x - shift))) + 10 * np.size(x)
+    res = np.sum((x - shift) ** 2 - 10 * np.cos(2 * np.pi * (
+        x - shift))) + 10 * np.size(x)
     if res <= 1e-8:
         global_reached = True
     if not global_reached:
@@ -69,9 +70,11 @@ def modified_rastrigin(x):
 
 ret = sda(modified_rastrigin, x_init, bounds=list(zip(lower, upper)))
 
-print(("global minimum: xmin =\n{0}\nf(xmin) = {1}\n"
-    "nb function call to reach global minimum with a 1e-8 precision: {2}").format(
-    ret.x, ret.fun, nb_call))
+print(('Although sdaopt finished after {0} function calls,\n'
+    'sdaopt actually has found the global minimum after {1} function calls.\n'
+    'global minimum: xmin =\n{2}\nf(xmin) = {3}'
+    ).format(ret.ncall, nb_call, ret.x, ret.fun))
+
 ```
 
 ## Running benchmark on a multicore machine
