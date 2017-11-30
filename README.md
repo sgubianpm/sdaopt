@@ -1,6 +1,8 @@
 # SDAopt
 
-Simmulated Dual Annealing global optimization algorithm implementation and extensive benchmark. **Testing functions** used in the benchmark (except suttonchen) have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project. (Refactoring and improvement of the old PyGenSA/HyGSA implementations)
+Simmulated Dual Annealing global optimization algorithm implementation and extensive benchmark. This version is a refactoring and improvements of the old PyGenSA/HyGSA implementations.
+
+**Testing functions** used in the benchmark (except suttonchen) have been implemented by Andreas Gavana, Andrew Nelson and scipy contributors and have been forked from SciPy project.
 
 Results of the benchmarks are available at:
 https://gist.github.com/sgubianpm/7d55f8d3ba5c9de4e9f0f1ffff1aa6cf
@@ -32,7 +34,7 @@ def rosenbrock(x):
 
 ret = sda(rosenbrock, None, [(-30, 30)] * 2)
 
-print("global minimum: xmin = {0} f(xmin) = {1}".format(
+print("global minimum:\nxmin = {0}\nf(xmin) = {1}".format(
     ret.x, ret.fun))
 ```
 
@@ -44,8 +46,10 @@ from sdaopt import sda
 
 global nb_call
 nb_call = 0
+global glob_reached
+global_reached = False
 np.random.seed(1234)
-dimension = 30
+dimension = 50
 # Setting assymetric lower and upper bounds
 lower = np.array([-5.12] * dimension)
 upper = np.array([10.24] * dimension)
@@ -57,16 +61,22 @@ x_init = lower + np.random.rand(dimension) * (upper - lower)
 def modified_rastrigin(x):
     shift = 3.14159
     global nb_call
-    res = np.sum((x - shift) ** 2 - 10 * np.cos(2 * np.pi * (x - shift))) + 10 * np.size(x)
-    if res > 1e-8:
+    global global_reached
+    res = np.sum((x - shift) ** 2 - 10 * np.cos(2 * np.pi * (
+        x - shift))) + 10 * np.size(x)
+    if res <= 1e-8:
+        global_reached = True
+    if not global_reached:
         nb_call += 1
     return(res)
 
 ret = sda(modified_rastrigin, x_init, bounds=list(zip(lower, upper)))
 
-print(("global minimum: xmin =\n{0}\nf(xmin) = {1}\n"
-    "nb function call to reach global minimum with a 1e-8 precision: {2}").format(
-    ret.x, ret.fun, nb_call))
+print(('Although sdaopt finished after {0} function calls,\n'
+    'sdaopt actually has found the global minimum after {1} function calls.\n'
+    'global minimum: xmin =\n{2}\nf(xmin) = {3}'
+    ).format(ret.ncall, nb_call, ret.x, ret.fun))
+
 ```
 
 ## Running benchmark on a multicore machine
