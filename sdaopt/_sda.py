@@ -157,6 +157,7 @@ class EnergyState():
 
 class MarkovChain(object):
 
+    
     def __init__(self, qa, vd, ofw, rs, state):
         # Local markov chain minimum energy and location
         self.emin = state.current_energy
@@ -172,9 +173,11 @@ class MarkovChain(object):
         self.not_improved_idx = 0
         self.not_improved_max_idx = 1000
         self._rs = rs 
+        self.temperature_step = 0
+        self.K = 100 * len(state.current_location)
 
     def run(self, step, temperature):
-        temperature_step = temperature / float(step + 1)
+        self.temperature_step = temperature / float(step + 1)
         self.not_improved_idx += 1
         for j in range(self.state.current_location.size * 2):
             if j == 0:
@@ -199,7 +202,7 @@ class MarkovChain(object):
                 # We have not improved but do we accept the new location?
                 r = self._rs.random_sample()
                 pqa_temp = (self.qa - 1.0) * (
-                    e - self.state.current_energy) / temperature_step + 1.0
+                    e - self.state.current_energy) / self.temperature_step + 1.0
                 if pqa_temp < 0.:
                     pqa = 0.
                 else:
@@ -230,9 +233,21 @@ class MarkovChain(object):
                 self.state.xbest = np.copy(x)
                 self.state.current_energy = e
                 self.state.current_location = np.copy(x)
-            # Global energy not improved, let's see what LS gives
-            # on the best Markov chain location
+                return
+        # Check probability of a need to perform a LS even if no improvment
+        # (Dual annealing principle)
+        do_ls = False
+        if self.K < 90 * len(self.state.current_location):
+            pls = np.exp(self.K * ( self.state.ebest - self.state.current_energy
+                                   ) / self.temperature_step )
+            if pls >= self._rs.random_sample():
+                do_ls = True
+        
+        # Global energy not improved, let's see what LS gives
+        # on the best Markov chain location
         if self.not_improved_idx >= self.not_improved_max_idx:
+            do_ls = True
+        if do_ls:
             e, x = self.ofw.local_search(self.xmin)
             self.xmin = np.copy(x)
             self.emin = e
