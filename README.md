@@ -49,7 +49,7 @@ nb_call = 0
 global glob_reached
 global_reached = False
 np.random.seed(1234)
-dimension = 30
+dimension = 50
 # Setting assymetric lower and upper bounds
 lower = np.array([-5.12] * dimension)
 upper = np.array([10.24] * dimension)
