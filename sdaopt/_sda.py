@@ -1,4 +1,4 @@
-# Hybrid Generalized simulated annealing implementation.
+# Simulated Dual Annealing implementation.
 # Copyright (c) 2016 Sylvain Gubian <sylvain.gubian@pmi.com>,
 # Yang Xiang <yang.xiang@pmi.com>
 # Author: Sylvain Gubian, PMP S.A.
@@ -17,6 +17,12 @@ __all__ = ['sda']
 BIG_VALUE = 1e16
 
 class VisitingDistribution(object):
+    """
+    Generating new coordinates based on the distorted Cauchy-Lorentz
+    distribution. Depending on the steps within the Markov chain, the strategy
+    for generating new location changes.
+    """
+
 
     tail_limit = 1.e8
     min_visit_bound = 1.e-10
@@ -37,8 +43,10 @@ class VisitingDistribution(object):
             # Changing all coordinates with a new visting value
             visits = np.array([self.visit_fn(
                 temperature) for _ in range(dim)])
-            visits[visits > self.tail_limit] = self.tail_limit * self.rs.random_sample()
-            visits[visits < -self.tail_limit] = -self.tail_limit * self.rs.random_sample()
+            upper_sample = self.rs.random_sample()
+            lower_sample = self.rs.random_sample()
+            visits[visits > self.tail_limit] = self.tail_limit * upper_sample 
+            visits[visits < -self.tail_limit] = -self.tail_limit * lower_sample
             x_visit = visits + x
             a = x_visit - self.lower
             b = np.fmod(a, self.b_range) + self.b_range
@@ -100,8 +108,13 @@ class VisitingDistribution(object):
 
 
 class EnergyState():
-
+    """
+    Recording of the energy state. At any time, it knows what is the currently
+    used coordinates and the most recent best location
+    """
+    # Maximimum number of trials for generating a valid starting point
     MAX_REINIT_COUNT = 1000
+
 
     def __init__(self, lower, upper):
         self.ebest = None
@@ -156,7 +169,10 @@ class EnergyState():
 
 
 class MarkovChain(object):
-
+    """
+    Chain that iterates twice over the dimension of the problem with the
+    strategy for local search decision
+    """
     
     def __init__(self, qa, vd, ofw, rs, state):
         # Local markov chain minimum energy and location
@@ -261,6 +277,10 @@ class MarkovChain(object):
                 self.state.current_location = np.copy(x)
 
 class ObjectiveFunWrapper(object):
+    """ Wrapper around the objective function in order apply local search and
+    default gradient computation. Default local minimizer is L-BFGS-B
+    """
+
 
     def __init__(self, bounds, func, **kwargs):
         self.func = func
@@ -280,17 +300,10 @@ class ObjectiveFunWrapper(object):
 
         # By default, scipy L-BFGS-B is used with a custom 3 points gradient
         # computation
-        if 'method' not in self.kwargs:
-            self.kwargs['method'] = 'L-BFGS-B'
-        if 'jac' not in self.kwargs:
-            self.kwargs['jac'] = self.gradient
-        if 'bounds' not in self.kwargs:
-            self.kwargs['bounds'] = bounds
-        if 'args' in self.kwargs:
-            self.fun_args = self.kwargs.get('args')
         else:
             self.fun_args= ()
-        if 'options' not in self.kwargs:
+        if not self.kwargs or 'method' not in self.kwargs:
+            self.kwargs['method'] = 'L-BFGS-B'
             self.kwargs['options'] = {
                 'disp': None, 'maxls': 100, 'iprint': -1, 'gtol': 1e-06,
                 'eps': 1e-06,
@@ -298,16 +311,16 @@ class ObjectiveFunWrapper(object):
                 'maxiter': 15000,
                 'maxcor': 10, 'maxfun': 15000
             }
-        else:
-            self.kwargs['factr'] = 1000.
-            self.kwargs['gtol'] = 1.e-6
-            #  self.kwargs['maxiter'] = self.ls_max_iter
-            self.kwargs['maxiter'] = 15000 
-            self.kwargs['maxls'] = 100
+            if 'jac' not in self.kwargs:
+                self.kwargs['jac'] = self.gradient
+            if 'bounds' not in self.kwargs:
+                self.kwargs['bounds'] = bounds
         if 'eps' in self.kwargs:
             self.reps = self.kwargs.get('eps')
         else:
             self.reps = 1.e-6
+        if 'args' in self.kwargs:
+            self.fun_args = self.kwargs.get('args')
 
     def func_wrapper(self, x):
         self.nb_fun_call += 1
@@ -495,8 +508,8 @@ def sda(func, x0, bounds, maxiter=1000, minimizer_kwargs=None,
     Simulated Annealing) to find the neighborhood of minima and introduces an
     additional annealing process for the best solution found.
 
-    GSA uses a distorted Cauchy-Lorentz visiting distribution, with its shape
-    controlled by the parameter :math:`q_{v}`
+    This algorithm uses a distorted Cauchy-Lorentz visiting distribution, with
+    its shape controlled by the parameter :math:`q_{v}`
 
     .. math::
 
@@ -561,12 +574,12 @@ def sda(func, x0, bounds, maxiter=1000, minimizer_kwargs=None,
     The function involved is called Rastrigin
     (https://en.wikipedia.org/wiki/Rastrigin_function)
 
-    >>> from scipy.optimize import sda
+    >>> from sdaopt import sda
     >>> func = lambda x: np.sum(x * x - 10 * np.cos(
     ...    2 * np.pi * x)) + 10 * np.size(x)
     >>> lw = [-5.12] * 10
     >>> up = [5.12] * 10
-    >>> ret = sda(func, None, bounds=(zip(lw, up)))
+    >>> ret = sda(func, None, bounds=list(zip(lw, up)))
     >>> print("global minimum: xmin = {0}, f(xmin) = {1}".format(
     ...    ret.x, ret.fun))
     """
