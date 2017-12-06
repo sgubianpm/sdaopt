@@ -16,20 +16,19 @@ from scipy._lib._util import check_random_state
 __all__ = ['sda']
 BIG_VALUE = 1e16
 
+
 class VisitingDistribution(object):
     """
     Generating new coordinates based on the distorted Cauchy-Lorentz
     distribution. Depending on the steps within the Markov chain, the strategy
     for generating new location changes.
     """
-
-
     tail_limit = 1.e8
     min_visit_bound = 1.e-10
 
     def __init__(self, lb, ub, qv, rs):
         self.qv = qv
-        self.rs = rs 
+        self.rs = rs
         self.lower = lb
         self.upper = ub
         self.b_range = ub - lb
@@ -45,7 +44,7 @@ class VisitingDistribution(object):
                 temperature) for _ in range(dim)])
             upper_sample = self.rs.random_sample()
             lower_sample = self.rs.random_sample()
-            visits[visits > self.tail_limit] = self.tail_limit * upper_sample 
+            visits[visits > self.tail_limit] = self.tail_limit * upper_sample
             visits[visits < -self.tail_limit] = -self.tail_limit * lower_sample
             x_visit = visits + x
             a = x_visit - self.lower
@@ -68,7 +67,7 @@ class VisitingDistribution(object):
             x_visit[index] = np.fmod(b, self.b_range[
                 index]) + self.lower[index]
             if np.fabs(x_visit[index] - self.lower[
-                index]) < self.min_visit_bound:
+                    index]) < self.min_visit_bound:
                 x_visit[index] += self.min_visit_bound
         return x_visit
 
@@ -96,7 +95,7 @@ class VisitingDistribution(object):
             while(enter or (self.s_gauss <= 0 or self.s_gauss >= 1)):
                 enter = False
                 sample1 = self.rs.random_sample()
-                self.x_gauss =  sample1 * 2.0 - 1.0
+                self.x_gauss = sample1 * 2.0 - 1.0
                 sample2 = self.rs.random_sample()
                 y_gauss = sample2 * 2.0 - 1.0
                 self.s_gauss = self.x_gauss ** 2 + y_gauss ** 2
@@ -114,7 +113,6 @@ class EnergyState():
     """
     # Maximimum number of trials for generating a valid starting point
     MAX_REINIT_COUNT = 1000
-
 
     def __init__(self, lower, upper):
         self.ebest = None
@@ -135,7 +133,7 @@ class EnergyState():
 
     def reset(self, owf, rs, x0=None):
         if x0 is None:
-            self.current_location  = self.lower + rs.random_sample(
+            self.current_location = self.lower + rs.random_sample(
                 len(self.lower)) * (self.upper - self.lower)
         else:
             self.current_location = np.copy(x0)
@@ -167,13 +165,11 @@ class EnergyState():
             # Otherwise, keep them in case of reannealing reset
 
 
-
 class MarkovChain(object):
     """
     Chain that iterates twice over the dimension of the problem with the
     strategy for local search decision
     """
-    
     def __init__(self, qa, vd, ofw, rs, state):
         # Local markov chain minimum energy and location
         self.emin = state.current_energy
@@ -188,7 +184,7 @@ class MarkovChain(object):
         self.ofw = ofw
         self.not_improved_idx = 0
         self.not_improved_max_idx = 1000
-        self._rs = rs 
+        self._rs = rs
         self.temperature_step = 0
         self.K = 100 * len(state.current_location)
 
@@ -202,7 +198,7 @@ class MarkovChain(object):
                 self.state_improved = True
             x_visit = self.vd.visiting(
                 self.state.current_location, j, temperature)
-            # Calling the objective function  
+            # Calling the objective function
             e = self.ofw.func_wrapper(x_visit)
             if e < self.state.current_energy:
                 #  print('Better energy: {0}'.format(e))
@@ -218,7 +214,7 @@ class MarkovChain(object):
                 # We have not improved but do we accept the new location?
                 r = self._rs.random_sample()
                 pqa_temp = (self.qa - 1.0) * (
-                    e - self.state.current_energy) / self.temperature_step + 1.0
+                    e - self.state.current_energy) / self.temperature_step + 1.
                 if pqa_temp < 0.:
                     pqa = 0.
                 else:
@@ -232,7 +228,7 @@ class MarkovChain(object):
                 # No improvement since long time
                 if self.not_improved_idx >= self.not_improved_max_idx:
                     if j == 0 or self.state.current_energy < self.emin:
-                        self.emin = self.state.current_energy 
+                        self.emin = self.state.current_energy
                         self.xmin = np.copy(self.state.current_location)
         # End of MarkovChain loop
 
@@ -255,11 +251,10 @@ class MarkovChain(object):
         # (Dual annealing principle)
         do_ls = False
         if self.K < 90 * len(self.state.current_location):
-            pls = np.exp(self.K * ( self.state.ebest - self.state.current_energy
-                                   ) / self.temperature_step )
+            pls = np.exp(self.K * (self.state.ebest - self.state.current_energy
+                                   ) / self.temperature_step)
             if pls >= self._rs.random_sample():
                 do_ls = True
-        
         # Global energy not improved, let's see what LS gives
         # on the best Markov chain location
         if self.not_improved_idx >= self.not_improved_max_idx:
@@ -271,28 +266,27 @@ class MarkovChain(object):
             self.not_improved_idx = 0
             self.not_improved_max_idx = self.state.current_location.size
             if e < self.state.ebest:
-                self.state.ebest = self.emin 
+                self.state.ebest = self.emin
                 self.state.xbest = np.copy(self.xmin)
                 self.state.current_energy = e
                 self.state.current_location = np.copy(x)
+
 
 class ObjectiveFunWrapper(object):
     """ Wrapper around the objective function in order apply local search and
     default gradient computation. Default local minimizer is L-BFGS-B
     """
-
-
     def __init__(self, bounds, func, **kwargs):
         self.func = func
         self.nb_fun_call = 0
         self.kwargs = kwargs
-        self.minimizer = minimize 
+        self.minimizer = minimize
         self.fun_args = None
         lu = list(zip(*bounds))
         self.lower = np.array(lu[0])
         self.upper = np.array(lu[1])
         self.ls_max_iter = self.lower.size * 6
-        
+
         if self.ls_max_iter < 100:
             self.ls_max_iter = 100
         if self.ls_max_iter > 1000:
@@ -301,13 +295,12 @@ class ObjectiveFunWrapper(object):
         # By default, scipy L-BFGS-B is used with a custom 3 points gradient
         # computation
         else:
-            self.fun_args= ()
+            self.fun_args = ()
         if not self.kwargs or 'method' not in self.kwargs:
             self.kwargs['method'] = 'L-BFGS-B'
             self.kwargs['options'] = {
                 'disp': None, 'maxls': 100, 'iprint': -1, 'gtol': 1e-06,
                 'eps': 1e-06,
-                #'maxiter': self.ls_max_iter,
                 'maxiter': 15000,
                 'maxcor': 10, 'maxfun': 15000
             }
@@ -376,7 +369,7 @@ class SDARunner(object):
         # Initialization of RandomState for reproducible runs if seed provided
         self.rs = check_random_state(seed)
         # Initialization of the energy state
-        self.es = EnergyState(lower, upper) 
+        self.es = EnergyState(lower, upper)
         self.es.reset(self.owf, self.rs, x0)
         # Maximum number of function call that can be used a stopping criterion
         self.maxfun = maxfun
@@ -576,7 +569,7 @@ def sda(func, x0, bounds, maxiter=1000, minimizer_kwargs=None,
     The following example is a 10-dimensional problem, with many local minima.
     The function involved is called Rastrigin
     (https://en.wikipedia.org/wiki/Rastrigin_function)
-
+    >>> import numpy as np
     >>> from sdaopt import sda
     >>> func = lambda x: np.sum(x * x - 10 * np.cos(
     ...    2 * np.pi * x)) + 10 * np.size(x)
@@ -587,8 +580,7 @@ def sda(func, x0, bounds, maxiter=1000, minimizer_kwargs=None,
     ...    ret.x, ret.fun))
     """
     gr = SDARunner(func, x0, bounds, seed, minimizer_kwargs,
-            temperature_start=initial_temp, qv = visit, qa = accept,
-            maxfun=maxfun, maxsteps=maxiter, pure_sa=pure_sa)
+                   temperature_start=initial_temp, qv=visit, qa=accept,
+                   maxfun=maxfun, maxsteps=maxiter, pure_sa=pure_sa)
     gr.search()
     return gr.result
-
