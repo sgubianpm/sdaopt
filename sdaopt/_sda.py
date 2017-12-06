@@ -491,6 +491,9 @@ def sda(func, x0, bounds, maxiter=1000, minimizer_kwargs=None,
         Specify `seed` for repeatable minimizations. The random numbers
         generated with this seed only affect the visiting distribution
         function and new coordinates generation.
+    pure_sa: boolean, optional
+        If `pure_sa` is set to `True`, a traditional Generalized Simulated
+        Annealing will be performed with no local search strategy applied.
 
     Returns
     -------
