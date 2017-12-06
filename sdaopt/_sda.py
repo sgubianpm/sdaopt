@@ -211,6 +211,7 @@ class MarkovChain(object):
                     # We accept the new location and update state
                     self.state.current_energy = e
                     self.state.current_location = np.copy(x_visit)
+                    self.xmin = np.copy(self.state.current_location)
 
                 # No improvement since long time
                 if self.not_improved_idx >= self.not_improved_max_idx:
@@ -344,8 +345,8 @@ class ObjectiveFunWrapper(object):
 class SDARunner(object):
     MAX_REINIT_COUNT = 1000
 
-    def __init__(self, fun, x0, bounds, minimizer_kwargs=None,
-                 seed=None, temperature_start=5230, qv=2.62, qa=-5.0,
+    def __init__(self, fun, x0, bounds, seed=None, minimizer_kwargs=None,
+                 temperature_start=5230, qv=2.62, qa=-5.0,
                  maxfun=1e7, maxsteps=500, pure_sa=False):
         if x0 is not None and not len(x0) == len(bounds):
             raise ValueError('Bounds size does not match x0')
@@ -418,8 +419,9 @@ class SDARunner(object):
         return res
 
 
-def sda(func, x0, bounds, maxiter=1000, initial_temp=5230., visit=2.62,
-        accept=-5.0, maxfun=1e7, args=None, seed=None, pure_sa=False):
+def sda(func, x0, bounds, maxiter=1000, minimizer_kwargs=None,
+        initial_temp=5230., visit=2.62, accept=-5.0, maxfun=1e7, seed=None,
+        pure_sa=False):
     """
     Find the global minimum of a function using the Simulated Dual Annealing
     algorithm
@@ -442,6 +444,14 @@ def sda(func, x0, bounds, maxiter=1000, initial_temp=5230., visit=2.62,
     maxiter : int, optional
         The maximum number of sda iterations. Increase this value if the
         objective function is very complicated with high dimensions.
+    minimizer_kwargs : dict, optional
+        Extra keyword arguments to be passed to the local minimizer
+            ``scipy.optimize.minimize()`` Some important options could be:
+            method : str
+                The minimization method (e.g. ``"L-BFGS-B"``)
+            args : tuple
+                Extra arguments passed to the objective function (``func``) and
+                its derivatives (Jacobian, Hessian).
     initial_temp : float, optional
         The initial temperature, use higher values to facilitates a wider
         search of the energy landscape, allowing sda to escape local minima
@@ -459,9 +469,6 @@ def sda(func, x0, bounds, maxiter=1000, initial_temp=5230., visit=2.62,
         algorithm is in the middle of a local search, this number will be
         exceeded, the algorithm will stop just after the local search is
         done.
-    args : tuple, optional
-        Any additional fixed parameters needed to
-        completely specify the objective function.
     seed : int or `np.random.RandomState`, optional
         If `seed` is not specified the `np.RandomState` singleton is used.
         If `seed` is an int, a new `np.random.RandomState` instance is used,
@@ -563,9 +570,9 @@ def sda(func, x0, bounds, maxiter=1000, initial_temp=5230., visit=2.62,
     >>> print("global minimum: xmin = {0}, f(xmin) = {1}".format(
     ...    ret.x, ret.fun))
     """
-    gr = SDARunner(func, x0, bounds, args, seed,
+    gr = SDARunner(func, x0, bounds, seed, minimizer_kwargs,
             temperature_start=initial_temp, qv = visit, qa = accept,
-            maxfun=maxfun, maxsteps=maxiter,pure_sa=pure_sa)
+            maxfun=maxfun, maxsteps=maxiter, pure_sa=pure_sa)
     gr.search()
     return gr.result
 
