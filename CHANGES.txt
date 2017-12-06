@@ -15,7 +15,8 @@ Initial Python implementation
 0.0.3
 -----
 
-- Improved implementation and border effect risk by breaking algorithm in modular pieces 
+- Improved implementation and border effect risk by breaking algorithm
+in modular pieces 
 - Generic minimizer used instead of calling L-BFGS-B with custom gradient
 - Fresh re-annealing implementation
 
@@ -23,4 +24,5 @@ Initial Python implementation
 -----
 - Added function for counting the number of testing function having the global
   minimum location centered on the bounds
+- Fixed PEP8 issues
 
