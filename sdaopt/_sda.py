@@ -19,9 +19,10 @@ BIG_VALUE = 1e16
 
 class VisitingDistribution(object):
     """
-    Generating new coordinates based on the distorted Cauchy-Lorentz
-    distribution. Depending on the steps within the Markov chain, the strategy
-    for generating new location changes.
+    Class used to generate new coordinates based on the distorted
+    Cauchy-Lorentz distribution. Depending on the steps within the Markov
+    chain, the class implements the strategy for generating new location
+    changes.
     """
     tail_limit = 1.e8
     min_visit_bound = 1.e-10
@@ -92,7 +93,7 @@ class VisitingDistribution(object):
     def gaussian_fn(self, axis):
         if axis == 1:
             enter = True
-            while(enter or (self.s_gauss <= 0 or self.s_gauss >= 1)):
+            while enter or (self.s_gauss <= 0 or self.s_gauss >= 1):
                 enter = False
                 sample1 = self.rs.random_sample()
                 self.x_gauss = sample1 * 2.0 - 1.0
@@ -108,8 +109,8 @@ class VisitingDistribution(object):
 
 class EnergyState():
     """
-    Recording of the energy state. At any time, it knows what is the currently
-    used coordinates and the most recent best location
+    Class used to record the energy state. At any time, it knows what is the
+    currently used coordinates and the most recent best location
     """
     # Maximimum number of trials for generating a valid starting point
     MAX_REINIT_COUNT = 1000
@@ -167,8 +168,8 @@ class EnergyState():
 
 class MarkovChain(object):
     """
-    Chain that iterates twice over the dimension of the problem with the
-    strategy for local search decision
+    Class used for the Markov chain and related strategy for local search
+    decision
     """
     def __init__(self, qa, vd, ofw, rs, state):
         # Local markov chain minimum energy and location
@@ -273,8 +274,10 @@ class MarkovChain(object):
 
 
 class ObjectiveFunWrapper(object):
-    """ Wrapper around the objective function in order apply local search and
-    default gradient computation. Default local minimizer is L-BFGS-B
+    """
+    Class used to wrap around the objective function in order to apply local
+    search and default gradient computation.
+    Default local minimizer is L-BFGS-B
     """
     def __init__(self, bounds, func, **kwargs):
         self.func = func
@@ -294,14 +297,12 @@ class ObjectiveFunWrapper(object):
 
         # By default, scipy L-BFGS-B is used with a custom 3 points gradient
         # computation
-        else:
-            self.fun_args = ()
         if not self.kwargs or 'method' not in self.kwargs:
             self.kwargs['method'] = 'L-BFGS-B'
             self.kwargs['options'] = {
                 'disp': None, 'maxls': 100, 'iprint': -1, 'gtol': 1e-06,
                 'eps': 1e-06,
-                'maxiter': 15000,
+                'maxiter': self.ls_max_iter,
                 'maxcor': 10, 'maxfun': 15000
             }
             if 'jac' not in self.kwargs:
@@ -314,6 +315,8 @@ class ObjectiveFunWrapper(object):
             self.reps = 1.e-6
         if 'args' in self.kwargs:
             self.fun_args = self.kwargs.get('args')
+        else:
+            self.fun_args = ()
 
     def func_wrapper(self, x):
         self.nb_fun_call += 1
