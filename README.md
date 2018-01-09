@@ -57,7 +57,7 @@ upper = np.array([10.24] * dimension)
 # Generating a random initial point
 x_init = lower + np.random.rand(dimension) * (upper - lower)
 
-# Defining a modified Rastring function with dimension 30 shifted by 3.14159
+# Defining a modified Rastring function with dimension 50 shifted by 3.14159
 def modified_rastrigin(x):
     shift = 3.14159
     global nb_call
