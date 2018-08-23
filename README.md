@@ -11,7 +11,7 @@ Minimum requirements to run the benchmarks is to have scipy installed. Other dep
 Running the benchmark is very CPU intensive and require a multicore machine or a cluster infrastructure.
 
 This algorithm is planned to be integrated to SciPy kit. It is under review by SciPy subject matter experts.
-https://github.com/scipy/scipy/pull/6569
+https://github.com/scipy/scipy/pull/8203
 
 
 ## Installation from source
