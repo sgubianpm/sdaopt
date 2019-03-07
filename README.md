@@ -10,8 +10,8 @@ https://gist.github.com/sgubianpm/7d55f8d3ba5c9de4e9f0f1ffff1aa6cf
 Minimum requirements to run the benchmarks is to have scipy installed. Other dependencies are managed in the setup.py file. 
 Running the benchmark is very CPU intensive and require a multicore machine or a cluster infrastructure.
 
-This algorithm is planned to be integrated to SciPy kit. It is under review by SciPy subject matter experts.
-https://github.com/scipy/scipy/pull/8203
+This algorithm is now available in SciPy optimization toolkit:
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.dual_annealing.html#scipy.optimize.dual_annealing
 
 
 ## Installation from source
